@@ -69,4 +69,34 @@ public:
     BFD_MEMORY();
 };
 
+// TODO: 超级块SUPER_BLOCK
+class SUPER_BLOCK{
+
+};
+
+// TODO: 磁盘块
+class DISK_BLOCK{
+
+};
+
+// TODO: DISK
+class DISK{
+private:
+    SUPER_BLOCK Super_block;
+    BFD_ITEM_DISK d_inode;
+    vector<DISK_BLOCK> d_block;
+
+};
+
+// 用户表USER
+class USER{
+private:
+    unsigned int id;    //用户id号
+    string username;
+    string userpwd;
+    int usergrp;        //用户组
+    bool isManager;     //管理员
+};
+
+
 #endif // FILESTRUCT_H
