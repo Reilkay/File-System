@@ -13,7 +13,7 @@ enum file_type {
 class BFD_ITEM_DISK
 {
 private:
-    unsigned int disk_inode_ID;
+    unsigned int disk_inode_ID; // i结点的id
     unsigned int master_ID;     // 文件拥有者ID
     file_type f_type;           // 文件类型
     char auth[3];               // 权限（三位十进制数表示）
