@@ -9,13 +9,10 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-<<<<<<< Updated upstream
     dinode.cpp \
     disk.cpp \
     diskblock.cpp \
-=======
     instruction.cpp \
->>>>>>> Stashed changes
     main.cpp \
     mainwindow.cpp \
     minode.cpp \
@@ -25,20 +22,15 @@ SOURCES += \
 
 HEADERS += \
     configure.h \
-<<<<<<< Updated upstream
     dinode.h \
     disk.h \
     diskblock.h \
+    instruction.h \
     mainwindow.h \
     minode.h \
     sfd.h \
     superblock.h \
     user.h
-=======
-    file-struct.h \
-    instruction.h \
-    mainwindow.h
->>>>>>> Stashed changes
 
 FORMS += \
     mainwindow.ui
