@@ -174,6 +174,11 @@ private:
 class DISK
 {
 public:
+    // 避免关机 恢复任务
+    bool Recovery();
+    // 第一次使用
+    void Init();
+
     SUPER_BLOCK getSuper_block() const;
     void setSuper_block(const SUPER_BLOCK &value);
 
@@ -352,6 +357,16 @@ isManager = value;
 SUPER_BLOCK DISK::getSuper_block() const
 {
 return Super_block;
+}
+
+bool DISK::Recovery()
+{
+
+}
+
+void DISK::Init()
+{
+
 }
 
 void DISK::setSuper_block(const SUPER_BLOCK &value)

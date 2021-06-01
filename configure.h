@@ -22,16 +22,16 @@
 // 最多允许10个用户登录
 #define USERNUM     10
 // 每个磁盘i节点所占字节
-#define DINODESIZ   32
+#define DINODESIZE   32
 // 所有磁盘i节点共占32个物理块
 #define DINODEBLK   32
 // 共有512个目录文件物理块
 #define FILEBLK     512
 // 超级块中空闲块数组的最大块数
-#define NICFREE     50
+#define SUPERFREEBLOCK     50
 // 超级块中空闲节点的最大块数
-#define NICINOD     50
-// i节点起始地址
+#define NICINODE     50
+// i节点起始地址 i节点连续存储
 #define DINODESTART 2*BLOCKSIZE
 // 目录、文件区起始地址
 #define DATASTART   (2+DINODEBLK)*BLOCKSIZE
