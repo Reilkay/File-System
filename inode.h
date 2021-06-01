@@ -10,7 +10,7 @@ using namespace std;
 class BFD_ITEM_MEMORY: public BFD_ITEM_DISK
 {
 private:
-    unsigned int memory_ID;
+    unsigned int inode_ID;
     bool f_lock;                    // 文件锁定状态（true为锁定）
     unsigned int f_access_num;      // 文件访问计数
     BFD_ITEM_MEMORY* node1;
