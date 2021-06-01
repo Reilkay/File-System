@@ -3,6 +3,8 @@
 
 // 每磁盘块大小
 #define BLOCKSIZE   512
+// 磁盘块(数据块)数目
+#define DATABLOCKNUM  512
 // 系统打开文件的最大项数
 #define SYSOPENFILE 40
 // 每个目录包含的最大文件项数

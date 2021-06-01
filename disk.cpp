@@ -6,6 +6,7 @@ SUPER_BLOCK DISK::getSuper_block() const
     return Super_block;
 }
 
+// 序列化与反序列化
 bool DISK::Recovery()
 {
 }
