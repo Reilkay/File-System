@@ -22,7 +22,7 @@ void SFD_ITEM::setID(int value)
 
 int SFD::findSfd_item(string file_name)
 {
-    for(auto i : SFD_list) {
+    for(SFD_ITEM i : SFD_list) {
         if(i.getFile_name() == file_name) {
             return i.getID();
         }
