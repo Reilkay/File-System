@@ -7,7 +7,7 @@
 using namespace std;
 
 enum diskblock_type {
-    content, index
+    CONTENT, INDEX
 };
 
 // TODO: 磁盘块
@@ -30,9 +30,9 @@ public:
 
     vector<int> getIndex() const;
     void setIndex(const vector<int> &value);
+    void addIndex(int value);
 
     int getIndex_num() const;
-    void setIndex_num(int value);
 
     diskblock_type getBlock_type() const;
     void setBlock_type(const diskblock_type &value);

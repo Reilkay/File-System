@@ -51,16 +51,18 @@ vector<int> DISK_BLOCK::getIndex() const
 void DISK_BLOCK::setIndex(const vector<int> &value)
 {
     index = value;
+    this->index_num = value.size();
+}
+
+void DISK_BLOCK::addIndex(int value)
+{
+    this->index.push_back(value);
+    this->index_num++;
 }
 
 int DISK_BLOCK::getIndex_num() const
 {
-    return index_num;
-}
-
-void DISK_BLOCK::setIndex_num(int value)
-{
-    index_num = value;
+    return this->index_num;
 }
 
 diskblock_type DISK_BLOCK::getBlock_type() const
