@@ -1,13 +1,13 @@
 #include"minode.h"
 
-BFD_ITEM_MEMORY::BFD_ITEM_MEMORY(BFD_ITEM_DISK pre_dinode,
-                                 unsigned int inode_ID,
-                                 bool f_lock,                    // 文件锁定状态（true为锁定）
-                                 unsigned int f_access_num,      // 文件访问计数
-                                 BFD_ITEM_MEMORY* node1,
-                                 BFD_ITEM_MEMORY* node2)
-{
 
+BFD_ITEM_MEMORY::BFD_ITEM_MEMORY(const BFD_ITEM_DISK &pre_dinode,
+                unsigned int inode_ID,
+                bool f_lock,                    // 文件锁定状态（true为锁定）
+                unsigned int f_access_num,      // 文件访问计数
+                BFD_ITEM_MEMORY* node1,
+                BFD_ITEM_MEMORY* node2)
+{
     this->setDinode_ID(pre_dinode.getDinode_ID());
     this->setMaster_ID(pre_dinode.getMaster_ID());
     this->setF_type(pre_dinode.getF_type());

@@ -23,11 +23,19 @@ private:
 class SFD
 {
 private:
+    int SFD_ID;
     vector<SFD_ITEM> SFD_list;
 public:
     SFD();
-    // 在SFD中通过文件名寻找索引序号 返回-1表示没有
+    // 在SFD中通过文件名寻找inode索引序号 返回-1表示没有
     int findSfd_item(string file_name);
+    // 添加SFD表项 默认为真？？？
+    bool addSfd_item(SFD_ITEM temp);
+    // 删除SFD表项目 删除成功为true
+    bool delSfd_item(string file_name);
+
+    int getSFD_ID() const;
+    void setSFD_ID(int value);
 };
 
 #endif // SFD_H

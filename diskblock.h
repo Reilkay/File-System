@@ -2,17 +2,20 @@
 #define DISKBLOCK_H
 
 #include <string>
+#include <vector>
 #include "configure.h"
 using namespace std;
 
 enum diskblock_type {
-    content, index
+    CONTENT, INDEX
 };
 
 // TODO: 磁盘块
 class DISK_BLOCK
 {
 public:
+    DISK_BLOCK();
+
     int getBlock_num() const;
     void setBlock_num(int value);
 
@@ -21,6 +24,18 @@ public:
 
     string getFile_name() const;
     void setFile_name(const string & value);
+
+    char* getData();
+    void setData(char* content);
+
+    vector<int> getIndex() const;
+    void setIndex(const vector<int> &value);
+    void addIndex(int value);
+
+    int getIndex_num() const;
+
+    diskblock_type getBlock_type() const;
+    void setBlock_type(const diskblock_type &value);
 
 private:
     // 在磁盘中的序号即为索引
@@ -36,7 +51,7 @@ private:
     // 占用空间
     int space_used;
     // 索引
-    int index[BLOCKSIZE / sizeof (int)];
+    vector<int> index;
     // 索引个数
     int index_num;
 };

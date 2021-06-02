@@ -16,7 +16,8 @@ class BFD_ITEM_DISK
 {
 public:
     // 设置默认构造
-    BFD_ITEM_DISK(unsigned int dinode_ID,    // i结点的id
+    BFD_ITEM_DISK(){}
+    BFD_ITEM_DISK(int dinode_ID,    // i结点的id
                   unsigned int master_ID,    // 文件拥有者ID
                   file_type f_type,          // 文件类型
                   vector<char> auth,         // 权限（三位十进制数表示）
@@ -47,14 +48,14 @@ public:
     time_t getF_change_time() const;
     void setF_change_time(const time_t &value);
 
-    unsigned int getDinode_ID() const;
-    void setDinode_ID(unsigned int value);
+    int getDinode_ID() const;
+    void setDinode_ID(int value);
 
     vector<char> getAuth() const;
     void setAuth(const vector<char> &value);
 
 private:
-    unsigned int dinode_ID;    // i结点的id
+    int dinode_ID;             // i结点的id
     unsigned int master_ID;    // 文件拥有者ID
     file_type f_type;          // 文件类型
     vector<char> auth;         // 权限（三位十进制数表示）
@@ -73,6 +74,10 @@ private:
 
 public:
     BFD_DISK();
+    // 根据sfd给的索引结号寻找到相应的inode信息
+    BFD_ITEM_DISK findInodeByNum(int need_num);
+    bool addInode(BFD_ITEM_DISK item);
+    bool delInode(BFD_ITEM_DISK item);
 };
 
 #endif // DINODE_H
