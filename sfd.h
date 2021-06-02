@@ -23,6 +23,7 @@ private:
 class SFD
 {
 private:
+    int SFD_ID;
     vector<SFD_ITEM> SFD_list;
 public:
     SFD();
@@ -32,6 +33,9 @@ public:
     bool addSfd_item(SFD_ITEM temp);
     // 删除SFD表项目 删除成功为true
     bool delSfd_item(string file_name);
+
+    int getSFD_ID() const;
+    void setSFD_ID(int value);
 };
 
 #endif // SFD_H

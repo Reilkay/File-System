@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 
+
 using namespace std;
 
 // 方法实现
@@ -97,25 +98,33 @@ bool DISK::saveFile(char* content)
     }
 }
 
-bool DISK::delFile(string file_name)
+bool DISK::delFile(QString file_path)
 {
-    // 从sfd中删除一项
-    int inode_num = this->root_sfd.findSfd_item(file_name);
-    this->root_sfd.delSfd_item(file_name);
-    // 从bfd中删除一项 因为需要从硬盘删除 所以保存临时的inode信息
-    BFD_ITEM_DISK temp_inode = this->d_inodes.findInodeByNum(inode_num)
-    this->d_inodes.delInode(temp_inode);
-    // TODO:从硬盘删除 ZRZ
+    QStringList split_path = file_path.split("/");
+
+    // TODO:成组链接法删除
 
     return true;
 }
 
-SFD DISK::getRoot_sfd() const
+vector<SFD> DISK::getAll_sfd() const
 {
-    return root_sfd;
+    return all_sfd;
 }
 
-void DISK::setRoot_sfd(const SFD &value)
+//int DISK::findFile(string file_name)
+//{
+//    for(SFD temp_sfd : this->all_sfd)
+//    {
+//        // 找到了直接return
+//        if(temp_sfd.findSfd_item(file_name) != -1)
+//            return temp_sfd.findSfd_item(file_name);
+//    }
+//    return -1;
+//}
+
+void DISK::setAll_sfd(const vector<SFD> &value)
 {
-    root_sfd = value;
+    all_sfd = value;
 }
+

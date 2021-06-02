@@ -20,6 +20,16 @@ void SFD_ITEM::setID(int value)
     ID = value;
 }
 
+int SFD::getSFD_ID() const
+{
+    return SFD_ID;
+}
+
+void SFD::setSFD_ID(int value)
+{
+    SFD_ID = value;
+}
+
 int SFD::findSfd_item(string file_name)
 {
     for(SFD_ITEM i : SFD_list)
