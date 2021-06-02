@@ -228,7 +228,7 @@ void cd(QStringList strList)
  * NAME
  *      Show working directory
  * SYNOPSIS
- *      pwd [--help][--version]
+ *      pwd
  */
 void pwd()
 {
@@ -566,7 +566,7 @@ void rm_del(QString filename,int ask,QString user)
  * NAME
  *      Delete a file or directory
  * SYNOPSIS
- *      rm [options] name
+ *      rm [-ri] name
  */
 void rm(QStringList strList, QString user)
 {
@@ -661,9 +661,9 @@ void rm(QStringList strList, QString user)
         for(int i=1;i<strList[1].length();i++)
         {
             if(strList[1][i] == 'r')
-                status[0] == 1;
+                status[0] = 1;
             else if(strList[1][i] == 'i')
-                status[i] == 1;
+                status[1] = 1;
             else    //命令行会对第一个遇到的非附加功能符号进行报错
             {
                 qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
@@ -727,8 +727,8 @@ void rm(QStringList strList, QString user)
  * NAME
  *      Rename or move a file or directory to another location
  * SYNOPSIS
- *      mv [options] source dest
- *      mv [options] source... directory
+ *      mv [-bifnu] source dest
+ *      mv [-bifnu] source directory
  */
 void mv(QStringList strList, QString user)
 {
@@ -778,7 +778,7 @@ void mv(QStringList strList, QString user)
         qDebug()<<"GNU coreutils online help: <http://www.gnu.org/software/coreutils/>";
         qDebug()<<"For complete documentation, run: info coreutils 'mv invocation'";
     }
-    else if(strList[1].length() > 1 && strList[1][0] == '-' && strList[1][1] != 'p')
+    else if(strList[1].length() > 1 && strList[1][0] == '-' && (strList[1][1] != 'b' || strList[1][1] != 'i' || strList[1][1] != 'f' || strList[1][1] != 'n' || strList[1][1] != 'u'))
     {
         if(strList[1].length() == 2 && strList[1][1] == '-')
         {
@@ -799,7 +799,16 @@ void mv(QStringList strList, QString user)
     else
     {
         int file_place = 1;
-        if(strList[1].mid(0,2) == "-p")file_place += 1;
+        if(strList[1][0] == '-')
+        {
+            if(length <= 2)
+            {
+                qDebug()<<"rm: missing operand";
+                qDebug()<<"Try 'rm --help' for more information.";
+                return ;
+            }
+            file_place += 1;
+        }
         if(length <= file_place+1)
         {
             qDebug()<<"mv: missing operand";
@@ -809,7 +818,7 @@ void mv(QStringList strList, QString user)
         QString source_file = strList[file_place];
         QString dest_file = strList[file_place + 1];
 
-        if(file_if_exist(file_name))    //判断是否存在
+        if(file_if_exist(source_file))    //判断是否存在
         {
             if(file_place == 1)
             {
@@ -818,56 +827,512 @@ void mv(QStringList strList, QString user)
             return ;
         }
 
-        //获取当前工作的路径，以判断当前所拥有的权限
-        QStringList work_path_list = strList[1].split("/");
-        QString work_path;
-        if(work_path_list.count() == 1)
+        int status[5]={0,0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
+        for(int i=1;i<strList[1].length();i++)
         {
-            work_path = "当前路径";
+            if(strList[1][i] == 'b')
+                status[0] = 1;
+            else if(strList[1][i] == 'i')
+                status[1] = 1;
+            else if(strList[1][i] == 'f')
+                status[2] = 1;
+            else if(strList[1][i] == 'n')
+                status[3] = 1;
+            else if(strList[1][i] == 'u')
+                status[4] = 1;
+            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            {
+                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                qDebug()<<"Try 'rm --help' for more information.";
+                return ;
+            }
+        }
+
+        QString type1 = get_file_type(source_file);
+
+        if(file_if_exist(dest_file))
+        {
+            QString permission1 = file_permission(source_file);
+            QString permission2 = file_permission(dest_file);
+
+            if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
+            {
+                if(get_filetime(source_file) < get_filetime(dest_file))
+                    return ;
+            }
+
+            //permission 格式为 ‘drwxrwxrwx'
+            if(user=="sudo")    //owner
+            {
+                if(permission1[2] != 'w' || permission2[2] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else if(get_uesr_permissions(user))   //获取权限，group
+            {
+                if(permission1[5] != 'w' || permission2[5] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else    //others
+            {
+                if(permission1[8] != 'w' || permission2[8] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+
+            QString type2 = get_file_type(dest_file);
+
+            if(type1 == "文件" && type2 == "文件")  //对文件重命名
+            {
+                if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                Qstring delete_answer = 'y';
+                if(status[2] != 1)  //-f无需询问
+                {
+                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                    delete_answer = get_delete_answer();
+                }
+                if(delete_answer == 'y')
+                {
+                    if(status[0] == 1)  //-b对原文件备份
+                        change_name(dest_file,dest_file+'~');
+                    else
+                        delete_file(dest_file);
+                    change_name(source_file,dest_file);
+                }
+            }
+            else if(type1 == "文件" && type2 == "目录") //将文件移动到目录下
+            {
+                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    Qstring delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        if(status[0] == 1)  //-b对原文件备份
+                            change_name(dest_file,dest_file+'~');
+                        else
+                            delete_file(dest_file);
+                        change_name(source_file,dest_file);
+                    }
+                }
+                else
+                    move_file_to Directory(source_file,dest_file);
+            }
+            else if(type1 == "目录" && type2 == "目录")  //将目录移动到目录type2下
+            {
+                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    Qstring delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        if(status[0] == 1)  //-b对原文件备份
+                            change_name(dest_file,dest_file+'~');
+                        else
+                            delete_file(dest_file);
+                        change_name(source_file,dest_file);
+                    }
+                }
+                else
+                    move_file_to Directory(source_file,dest_file);
+            }
+            else if(type1 == "目录" && type1 == "文件")    //error
+            {
+                if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                Qstring delete_answer = 'y';
+                if(status[2] != 1)  //-f无需询问
+                {
+                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                    delete_answer = get_delete_answer();
+                }
+                if(delete_answer == 'y')
+                {
+                    qDebug().nospace()<<"mv: cannot overwrite non-directory ‘"<<qPrintable(dest_file)<<"’ with directory ‘"<<qPrintable(source_file)<<"’";
+                }
+            }
         }
         else
         {
-            work_path_list.removeLast();
-            work_path = work_path_list.join("/");
-        }
+            QString permission = file_permission(file_name);    //删除为获取所删除的目录的权限
+            //permission 格式为 ‘drwxrwxrwx'
+            if(user=="sudo")    //owner
+            {
+                if(permission[2] == 'w')
+                    change_file_name(source_file,dest_file);
+                else
+                    qDebug()<<"Permission denied";
+            }
+            else if(get_uesr_permissions(user))   //获取权限，group
+            {
+                if(permission[5] == 'w')
+                    change_file_name(source_file,dest_file);
+                else
+                    qDebug()<<"Permission denied";
+            }
+            else    //others
+            {
+                if(permission[8] == 'w')
+                    change_file_name(source_file,dest_file);
+                else
+                    qDebug()<<"Permission denied";
+            }
 
-        QString permission = file_permission("work_path");
-
-        //permission 格式为 ‘drwxrwxrwx'
-        //权限判断
-        if(user=="sudo")    //owner
-        {
-            if(permission[1] == 'r')
-                create_file(file_name);
-            else
-                qDebug()<<"Permission denied";
-        }
-        else if(get_uesr_permissions(user))   //获取权限，group
-        {
-            if(permission[4] == 'r')
-                create_file(file_name);
-            else
-                qDebug()<<"Permission denied";
-        }
-        else    //others
-        {
-            if(permission[7] == 'r')
-                create_file(file_name);
-            else
-                qDebug()<<"Permission denied";
         }
     }
 }
 
 /*
  * NAME
- *      Delete a file or directory
+ *      Used to copy files or directories
  * SYNOPSIS
- *      rm [options] name
+ *      cp [-fpr] source... directory
  */
 void cp(QStringList strList, QString user)
 {
+    int length = strList.count();
+    if(length == 1)
+    {
+        qDebug()<<"cp: missing operand";
+        qDebug()<<"Try 'cp --help' for more information.";
+    }
+    else if(strList[1] == "--help")
+    {
+        qDebug()<<"Usage: cp [OPTION]... [-T] SOURCE DEST";
+        qDebug()<<"  or:  cp [OPTION]... SOURCE... DIRECTORY";
+        qDebug()<<"  or:  cp [OPTION]... -t DIRECTORY SOURCE...";
+        qDebug()<<"Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY."<<Qt::endl;
 
+        qDebug()<<"Mandatory arguments to long options are mandatory for short options too.";
+        qDebug()<<"  -a, --archive                same as -dR --preserve=all";
+        qDebug()<<"      --attributes-only        don't copy the file data, just the attributes";
+        qDebug()<<"      --backup[=CONTROL]       make a backup of each existing destination file";
+        qDebug()<<"  -b                           like --backup but does not accept an argument";
+        qDebug()<<"      --copy-contents          copy contents of special files when recursive";
+        qDebug()<<"  -d                           same as --no-dereference --preserve=links";
+        qDebug()<<"  -f, --force                  if an existing destination file cannot be";
+        qDebug()<<"                                 opened, remove it and try again (this option";
+        qDebug()<<"                                 is ignored when the -n option is also used)";
+        qDebug()<<"  -i, --interactive            prompt before overwrite (overrides a previous -n";
+        qDebug()<<"                                  option)";
+        qDebug()<<"  -H                           follow command-line symbolic links in SOURCE";
+        qDebug()<<"  -l, --link                   hard link files instead of copying";
+        qDebug()<<"  -L, --dereference            always follow symbolic links in SOURCE";
+        qDebug()<<"  -n, --no-clobber             do not overwrite an existing file (overrides";
+        qDebug()<<"                                 a previous -i option)";
+        qDebug()<<"  -P, --no-dereference         never follow symbolic links in SOURCE";
+        qDebug()<<"  -p                           same as --preserve=mode,ownership,timestamps";
+        qDebug()<<"      --preserve[=ATTR_LIST]   preserve the specified attributes (default:";
+        qDebug()<<"                                 mode,ownership,timestamps), if possible";
+        qDebug()<<"                                 additional attributes: context, links, xattr,";
+        qDebug()<<"                                 all";
+        qDebug()<<"  -c                           deprecated, same as --preserve=context";
+        qDebug()<<"      --no-preserve=ATTR_LIST  don't preserve the specified attributes";
+        qDebug()<<"      --parents                use full source file name under DIRECTORY";
+        qDebug()<<"  -R, -r, --recursive          copy directories recursively";
+        qDebug()<<"      --reflink[=WHEN]         control clone/CoW copies. See below";
+        qDebug()<<"      --remove-destination     remove each existing destination file before";
+        qDebug()<<"                                 attempting to open it (contrast with --force)";
+        qDebug()<<"      --sparse=WHEN            control creation of sparse files. See below";
+        qDebug()<<"      --strip-trailing-slashes  remove any trailing slashes from each SOURCE";
+        qDebug()<<"                                 argument";
+        qDebug()<<"  -s, --symbolic-link          make symbolic links instead of copying";
+        qDebug()<<"  -S, --suffix=SUFFIX          override the usual backup suffix";
+        qDebug()<<"  -t, --target-directory=DIRECTORY  copy all SOURCE arguments into DIRECTORY";
+        qDebug()<<"  -T, --no-target-directory    treat DEST as a normal file";
+        qDebug()<<"  -u, --update                 copy only when the SOURCE file is newer";
+        qDebug()<<"                                 than the destination file or when the";
+        qDebug()<<"                                 destination file is missing";
+        qDebug()<<"  -v, --verbose                explain what is being done";
+        qDebug()<<"  -x, --one-file-system        stay on this file system";
+        qDebug()<<"  -Z                           set SELinux security context of destination";
+        qDebug()<<"                                 file to default type";
+        qDebug()<<"      --context[=CTX]          like -Z, or if CTX is specified then set the";
+        qDebug()<<"                                 SELinux or SMACK security context to CTX";
+        qDebug()<<"      --help     display this help and exit";
+        qDebug()<<"      --version  output version information and exit"<<Qt::endl;
+
+        qDebug()<<"By default, sparse SOURCE files are detected by a crude heuristic and the";
+        qDebug()<<"corresponding DEST file is made sparse as well.  That is the behavior";
+        qDebug()<<"selected by --sparse=auto.  Specify --sparse=always to create a sparse DEST";
+        qDebug()<<"file whenever the SOURCE file contains a long enough sequence of zero bytes.";
+        qDebug()<<"Use --sparse=never to inhibit creation of sparse files."<<Qt::endl;
+
+        qDebug()<<"When --reflink[=always] is specified, perform a lightweight copy, where the";
+        qDebug()<<"data blocks are copied only when modified.  If this is not possible the copy";
+        qDebug()<<"fails, or if --reflink=auto is specified, fall back to a standard copy."<<Qt::endl;
+
+        qDebug()<<"The backup suffix is '~', unless set with --suffix or SIMPLE_BACKUP_SUFFIX.";
+        qDebug()<<"The version control method may be selected via the --backup option or through";
+        qDebug()<<"the VERSION_CONTROL environment variable.  Here are the values:"<<Qt::endl;
+
+        qDebug()<<"  none, off       never make backups (even if --backup is given)";
+        qDebug()<<"  numbered, t     make numbered backups";
+        qDebug()<<"  existing, nil   numbered if numbered backups exist, simple otherwise";
+        qDebug()<<"  simple, never   always make simple backups"<<Qt::endl;
+
+        qDebug()<<"As a special case, cp makes a backup of SOURCE when the force and backup";
+        qDebug()<<"options are given and SOURCE and DEST are the same name for an existing,";
+        qDebug()<<"regular file."<<Qt::endl;
+
+        qDebug()<<"GNU coreutils online help: <http://www.gnu.org/software/coreutils/>";
+        qDebug()<<"For complete documentation, run: info coreutils 'cp invocation'";
+    }
+    else if(strList[1].length() > 1 && strList[1][0] == '-' && (strList[1][1] != 'f' || strList[1][1] != 'p' || strList[1][1] != 'r'))
+    {
+        if(strList[1].length() == 2 && strList[1][1] == '-')
+        {
+            qDebug()<<"cp: missing operand";
+            qDebug()<<"Try 'cp --help' for more information.";
+        }
+        else if(strList[1].length() == 2)
+        {
+            qDebug().nospace()<<"cp: invalid option -- '"<<strList[1][1]<<"'";
+            qDebug()<<"Try 'cp --help' for more information.";
+        }
+        else
+        {
+            qDebug().nospace()<<"cp: unrecognized option -- '"<<qPrintable(strList[1])<<"'";
+            qDebug()<<"Try 'cp --help' for more information.";
+        }
+    }
+    else
+    {
+        int file_place = 1;
+        if(strList[1].mid(0,2) == "-p")file_place += 1;
+        if(length <= file_place+1)
+        {
+            qDebug()<<"cp: missing operand";
+            qDebug()<<"Try 'cp --help' for more information.";
+            return ;
+        }
+        QString source_file = strList[file_place];
+        QString dest_file = strList[file_place + 1];
+
+        if(file_if_exist(source_file))    //判断是否存在
+        {
+            if(file_place == 1)
+            {
+                qDebug().nospace()<<"mv: cannot create directory ‘"<<qPrintable(file_name)<<"’: File exists";
+            }
+            return ;
+        }
+
+        int status[3]={0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
+        for(int i=1;i<strList[1].length();i++)
+        {
+            if(strList[1][i] == 'f')
+                status[0] = 1;
+            else if(strList[1][i] == 'p')
+                status[1] = 1;
+            else if(strList[1][i] == 'r')
+                status[2] = 1;
+            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            {
+                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                qDebug()<<"Try 'rm --help' for more information.";
+                return ;
+            }
+        }
+
+        QString type1 = get_file_type(source_file);
+
+        if(file_if_exist(dest_file))
+        {
+            QString permission1 = file_permission(source_file);
+            QString permission2 = file_permission(dest_file);
+
+            if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
+            {
+                if(get_filetime(source_file) < get_filetime(dest_file))
+                    return ;
+            }
+
+            //permission 格式为 ‘drwxrwxrwx'
+            if(user=="sudo")    //owner
+            {
+                if(permission1[2] != 'w' || permission2[2] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else if(get_uesr_permissions(user))   //获取权限，group
+            {
+                if(permission1[5] != 'w' || permission2[5] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else    //others
+            {
+                if(permission1[8] != 'w' || permission2[8] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+
+            QString type2 = get_file_type(dest_file);
+
+            if(type1 == "文件" && type2 == "文件")  //对文件重命名
+            {
+                if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                Qstring delete_answer = 'y';
+                if(status[2] != 1)  //-f无需询问
+                {
+                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                    delete_answer = get_delete_answer();
+                }
+                if(delete_answer == 'y')
+                {
+                    if(status[0] == 1)  //-b对原文件备份
+                        change_name(dest_file,dest_file+'~');
+                    else
+                        delete_file(dest_file);
+                    change_name(source_file,dest_file);
+                }
+            }
+            else if(type1 == "文件" && type2 == "目录") //将文件移动到目录下
+            {
+                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    Qstring delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        if(status[0] == 1)  //-b对原文件备份
+                            change_name(dest_file,dest_file+'~');
+                        else
+                            delete_file(dest_file);
+                        change_name(source_file,dest_file);
+                    }
+                }
+                else
+                    move_file_to Directory(source_file,dest_file);
+            }
+            else if(type1 == "目录" && type2 == "目录")  //将目录移动到目录type2下
+            {
+                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    Qstring delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        if(status[0] == 1)  //-b对原文件备份
+                            change_name(dest_file,dest_file+'~');
+                        else
+                            delete_file(dest_file);
+                        change_name(source_file,dest_file);
+                    }
+                }
+                else
+                    move_file_to Directory(source_file,dest_file);
+            }
+            else if(type1 == "目录" && type1 == "文件")    //error
+            {
+                if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                Qstring delete_answer = 'y';
+                if(status[2] != 1)  //-f无需询问
+                {
+                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                    delete_answer = get_delete_answer();
+                }
+                if(delete_answer == 'y')
+                {
+                    qDebug().nospace()<<"mv: cannot overwrite non-directory ‘"<<qPrintable(dest_file)<<"’ with directory ‘"<<qPrintable(source_file)<<"’";
+                }
+            }
+        }
+        else
+        {
+            QString permission1 = file_permission(source_file);
+
+            //获取当前工作的路径，以判断当前所拥有的权限
+            QStringList work_path_list = dest_file.split("/");
+            QString work_path;
+            if(work_path_list.count() == 1)
+            {
+                work_path = "当前路径";
+            }
+            else
+            {
+                work_path_list.removeLast();
+                work_path = work_path_list.join("/");
+            }
+
+            QString permission2 = file_permission(work_path);
+
+            if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
+            {
+                if(get_filetime(source_file) < get_filetime(dest_file))
+                    return ;
+            }
+
+            //permission 格式为 ‘drwxrwxrwx'
+            if(user=="sudo")    //owner
+            {
+                if(permission1[2] != 'w' || permission2[2] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else if(get_uesr_permissions(user))   //获取权限，group
+            {
+                if(permission1[5] != 'w' || permission2[5] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else    //others
+            {
+                if(permission1[8] != 'w' || permission2[8] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+
+            change_file_name(source_file,dest_file);
+        }
+    }
 }
 
 /*
@@ -1626,6 +2091,7 @@ void choose(QString str, QString user)
     else if (strList[0] == "rm")
         rm(strList, user);
     else if (strList[0] == "mv")
+        mv(strList, user);
     else if (strList[0] == "cp")
     else if (strList[0] == "cat")
     else if (strList[0] == "whereis")
