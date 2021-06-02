@@ -56,7 +56,7 @@ void DISK::setUser_table(const USER &value)
     user_table = value;
 }
 
-bool DISK::saveFile(char* content)
+bool DISK::saveFile(char *content)
 {
     int content_len = strlen(content);
     // 数据块个数
@@ -64,9 +64,9 @@ bool DISK::saveFile(char* content)
     // 索引级数
     int need_index_rank = 0;
     float temp_shang = data_block_num;
-    while(1) {
+    while (1) {
         temp_shang = temp_shang / (BLOCKSIZE / sizeof(int));
-        if(temp_shang < 1) {
+        if (temp_shang < 1) {
             break;
         } else {
             need_index_rank += 1;
@@ -79,38 +79,41 @@ bool DISK::saveFile(char* content)
     temp_shang = data_block_num;
     // 所需总块数
     int sum_num = data_block_num;
-    while(temp_rank --) {
+    while (temp_rank--) {
         temp_shang = ceil(temp_shang / pow(BLOCKSIZE / sizeof(int), temp_rank));
         index_rank_num[temp_rank - 1] = temp_shang;
         sum_num += temp_shang;
     }
     // 申请的块序号
     vector<int> blocks_index = this->Super_block.distri_disk_free_block(sum_num);
-    if(blocks_index.size()) {
-        if(index_rank_num.size() == 0) {// 无需索引
+    if (blocks_index.size()) {
+        if (index_rank_num.size() == 0) {
+            // 无需索引
             d_block[blocks_index[0]].setData(content);
         } else {
             int in = 0;
-            for(in = 0; in < data_block_num; in++) {// 保存数据块
+            for (in = 0; in < data_block_num; in++) {
+                // 保存数据块
                 char tmp_content[BLOCKSIZE];
                 int tmp_len = min(int(BLOCKSIZE), int(strlen(content) - in * BLOCKSIZE + 1));
                 strncpy(tmp_content, content + in * BLOCKSIZE, tmp_len);
                 this->d_block[blocks_index[in]].setData(tmp_content);
                 this->d_block[blocks_index[in]].setBlock_type(CONTENT);
             }
-            for(unsigned int rank = 0; rank < index_rank_num.size(); rank++) {// 保存各级索引块
+            for (unsigned int rank = 0; rank < index_rank_num.size(); rank++) {
+                // 保存各级索引块
                 int unsaved_index_num;
-                if(rank == 0) {
+                if (rank == 0) {
                     unsaved_index_num = data_block_num;
                 } else {
                     unsaved_index_num = index_rank_num[rank - 1];
                 }
                 int saved_index_num = 0;
-                for(int i = 0; i < index_rank_num[rank]; i++) {
+                for (int i = 0; i < index_rank_num[rank]; i++) {
                     vector<int> tmp_index;
                     int tmp_len = min(int(BLOCKSIZE), int(unsaved_index_num));
                     tmp_index.resize(tmp_len);
-                    for(int it = saved_index_num; it < saved_index_num + tmp_len; it++) {
+                    for (int it = saved_index_num; it < saved_index_num + tmp_len; it++) {
                         tmp_index.push_back(blocks_index[it]);
                     }
                     d_block[blocks_index[in]].setIndex(tmp_index);
@@ -130,24 +133,30 @@ bool DISK::createNewFile(string path)
 {
 }
 
-bool DISK::delFile(string file_name)
+bool DISK::delFile(QString file_path)
 {
-    // 从sfd中删除一项
-    int inode_num = this->root_sfd.findSfd_item(file_name);
-    this->root_sfd.delSfd_item(file_name);
-    // 从bfd中删除一项 因为需要从硬盘删除 所以保存临时的inode信息
-    BFD_ITEM_DISK temp_inode = this->d_inodes.findInodeByNum(inode_num);
-    this->d_inodes.delInode(temp_inode);
-    // TODO:从硬盘删除 ZRZ
+    QStringList split_path = file_path.split("/");
+    // TODO:成组链接法删除
     return true;
 }
 
-SFD DISK::getRoot_sfd() const
+vector<SFD> DISK::getAll_sfd() const
 {
-    return root_sfd;
+    return all_sfd;
 }
 
-void DISK::setRoot_sfd(const SFD &value)
+//int DISK::findFile(string file_name)
+//{
+//    for(SFD temp_sfd : this->all_sfd)
+//    {
+//        // 找到了直接return
+//        if(temp_sfd.findSfd_item(file_name) != -1)
+//            return temp_sfd.findSfd_item(file_name);
+//    }
+//    return -1;
+//}
+
+void DISK::setAll_sfd(const vector<SFD> &value)
 {
-    root_sfd = value;
+    all_sfd = value;
 }

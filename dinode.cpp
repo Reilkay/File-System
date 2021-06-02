@@ -1,6 +1,6 @@
 #include "dinode.h"
 
-BFD_ITEM_DISK::BFD_ITEM_DISK(unsigned int dinode_ID,     // i结点的id
+BFD_ITEM_DISK::BFD_ITEM_DISK(int dinode_ID,     // i结点的id
                              unsigned int master_ID,     // 文件拥有者ID
                              file_type f_type,           // 文件类型
                              vector<char> auth,          // 权限（三位十进制数表示）

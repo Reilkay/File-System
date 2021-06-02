@@ -6,6 +6,8 @@
 #include "dinode.h"
 #include "user.h"
 #include "sfd.h"
+#include <QString>
+#include <QAbstractItemModel>
 
 
 // TODO: DISK
@@ -33,16 +35,21 @@ public:
     bool saveFile(char* content);
 
     // TODO:做多文件
-    bool delFile(string file_name);
+    bool delFile(QString file_path);
 
-    SFD getRoot_sfd() const;
-    void setRoot_sfd(const SFD &value);
+
+    vector<SFD> getAll_sfd() const;
+
+    // 从所有SFD中寻找文件 返回inode索引 否则返回-1
+    int findFile(string file_path);
+
+    void setAll_sfd(const vector<SFD> &value);
 
 private:
     // 成组链接的首个超级块
     SUPER_BLOCK Super_block;
     // 根目录/首个SFD
-    SFD root_sfd;
+    vector<SFD> all_sfd;
     // i结点信息
     BFD_DISK d_inodes;
     // 块信息
