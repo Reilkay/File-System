@@ -96,3 +96,26 @@ bool DISK::saveFile(char* content)
         return false;
     }
 }
+
+bool DISK::delFile(string file_name)
+{
+    // 从sfd中删除一项
+    int inode_num = this->root_sfd.findSfd_item(file_name);
+    this->root_sfd.delSfd_item(file_name);
+    // 从bfd中删除一项 因为需要从硬盘删除 所以保存临时的inode信息
+    BFD_ITEM_DISK temp_inode = this->d_inodes.findInodeByNum(inode_num)
+    this->d_inodes.delInode(temp_inode);
+    // TODO:从硬盘删除 ZRZ
+
+    return true;
+}
+
+SFD DISK::getRoot_sfd() const
+{
+    return root_sfd;
+}
+
+void DISK::setRoot_sfd(const SFD &value)
+{
+    root_sfd = value;
+}

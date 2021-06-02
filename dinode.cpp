@@ -8,8 +8,9 @@ BFD_ITEM_DISK::BFD_ITEM_DISK(unsigned int dinode_ID,     // i结点的id
                              unsigned int f_addr,        // 文件地址（物理地址/下级目录ID）
                              unsigned int f_link_num,    // 文件链接计数
                              time_t f_creat_time,        // 文件创建时间
-                             time_t f_change_time)      // 文件存取时间
+                             time_t f_change_time)       // 文件存取时间
 {
+    // 默认权限是755
     this->auth.resize(3);
     this->setDinode_ID(dinode_ID);
     this->setMaster_ID(master_ID);
@@ -92,12 +93,12 @@ void BFD_ITEM_DISK::setF_change_time(const time_t &value)
     f_change_time = value;
 }
 
-unsigned int BFD_ITEM_DISK::getDinode_ID() const
+int BFD_ITEM_DISK::getDinode_ID() const
 {
     return dinode_ID;
 }
 
-void BFD_ITEM_DISK::setDinode_ID(unsigned int value)
+void BFD_ITEM_DISK::setDinode_ID(int value)
 {
     dinode_ID = value;
 }
@@ -110,4 +111,41 @@ vector<char> BFD_ITEM_DISK::getAuth() const
 void BFD_ITEM_DISK::setAuth(const vector<char> &value)
 {
     auth = value;
+}
+
+BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
+{
+    for(BFD_ITEM_DISK temp : this->BFD_DISK_list)
+    {
+        if(temp.getDinode_ID() == need_num)
+            return temp;
+        else
+        {
+            BFD_ITEM_DISK temp = BFD_ITEM_DISK();
+            temp.setDinode_ID(-1);
+            return temp;
+        }
+    }
+
+}
+
+bool BFD_DISK::addInode(BFD_ITEM_DISK item)
+{
+    this->BFD_DISK_list.push_back(item);
+    return true;
+}
+
+bool BFD_DISK::delInode(BFD_ITEM_DISK item)
+{
+    for(vector<BFD_ITEM_DISK>::iterator it = this->BFD_DISK_list.begin();
+        it != this->BFD_DISK_list.end();
+        it ++)
+    {
+        if(item.getDinode_ID() == it->getDinode_ID())
+        {
+            this->BFD_DISK_list.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
