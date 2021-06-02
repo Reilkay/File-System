@@ -117,6 +117,7 @@ bool DISK::saveFile(char *content)
                         tmp_index.push_back(blocks_index[it]);
                     }
                     d_block[blocks_index[in]].setIndex(tmp_index);
+                    d_block[blocks_index[in]].setBlock_type(INDEX);
                     saved_index_num += tmp_len;
                     unsaved_index_num -= tmp_len;
                 }
