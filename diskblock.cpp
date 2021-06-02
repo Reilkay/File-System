@@ -1,6 +1,13 @@
 #include "diskblock.h"
+#include "configure.h"
+#include<cstring>
 
 // 方法实现
+DISK_BLOCK::DISK_BLOCK()
+{
+    this->index.resize(BLOCKSIZE / sizeof (int));
+}
+
 int DISK_BLOCK::getBlock_num() const
 {
     return block_num;
@@ -29,4 +36,9 @@ string DISK_BLOCK::getFile_name() const
 void DISK_BLOCK::setFile_name(const string &value)
 {
     file_name = value;
+}
+
+void DISK_BLOCK::setData(char* content)
+{
+    strcpy_s(this->data, content);
 }

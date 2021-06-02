@@ -28,6 +28,8 @@ public:
     USER getUser_table() const;
     void setUser_table(const USER &value);
 
+    bool saveFile(char* content);
+
 private:
     // 成组链接的首个超级块
     SUPER_BLOCK Super_block;
