@@ -42,3 +42,33 @@ void DISK_BLOCK::setData(char* content)
 {
     strcpy_s(this->data, content);
 }
+
+vector<int> DISK_BLOCK::getIndex() const
+{
+    return index;
+}
+
+void DISK_BLOCK::setIndex(const vector<int> &value)
+{
+    index = value;
+}
+
+int DISK_BLOCK::getIndex_num() const
+{
+    return index_num;
+}
+
+void DISK_BLOCK::setIndex_num(int value)
+{
+    index_num = value;
+}
+
+diskblock_type DISK_BLOCK::getBlock_type() const
+{
+    return block_type;
+}
+
+void DISK_BLOCK::setBlock_type(const diskblock_type &value)
+{
+    block_type = value;
+}

@@ -28,7 +28,14 @@ public:
     char* getData();
     void setData(char* content);
 
-    void setIndex()
+    vector<int> getIndex() const;
+    void setIndex(const vector<int> &value);
+
+    int getIndex_num() const;
+    void setIndex_num(int value);
+
+    diskblock_type getBlock_type() const;
+    void setBlock_type(const diskblock_type &value);
 
 private:
     // 在磁盘中的序号即为索引
