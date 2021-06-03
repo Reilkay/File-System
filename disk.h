@@ -99,6 +99,10 @@ public:
     bool EditFile(QString path, QString content);
     // 写入文件尾（追加）
     bool addLineInFile(QString path, QString content);
+    // 获取文件权限
+    QString getFileAuth(QString path);
+    // 修改文件权限
+    void changeFileAuth(QString path, QString auth);
 
 private:
     // 成组链接的首个超级块
