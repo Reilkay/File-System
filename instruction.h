@@ -5,6 +5,7 @@
 #include <QString>
 #include <QDebug>
 #include <QCharRef>
+#include <string>
 
 //class Instruction : public QAbstractItemModel
 //{
