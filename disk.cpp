@@ -334,7 +334,7 @@ void DISK::delFile(QString file_path)
 //            }
 //        }
 //    }
-    return false;
+    return;
 }
 
 //void DISK::Dfs_del_dir(int cur_layer,int max_layer)
