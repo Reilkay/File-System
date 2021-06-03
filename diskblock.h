@@ -15,6 +15,7 @@ class DISK_BLOCK
 {
 public:
     DISK_BLOCK();
+    DISK_BLOCK(int block_num,bool is_full);
 
     int getBlock_num() const;
     void setBlock_num(int value);

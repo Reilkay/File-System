@@ -8,6 +8,13 @@ DISK_BLOCK::DISK_BLOCK()
     this->index.reserve(BLOCKSIZE / sizeof (int));
 }
 
+DISK_BLOCK::DISK_BLOCK(int block_num, bool is_full)
+{
+    this->index.reserve(BLOCKSIZE / sizeof (int));
+    this->block_num =block_num;
+    this->is_full=false;
+}
+
 int DISK_BLOCK::getBlock_num() const
 {
     return block_num;
