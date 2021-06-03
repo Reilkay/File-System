@@ -5,8 +5,7 @@
 #include <vector>
 using namespace std;
 
-enum file_type
-{
+enum file_type {
     directory,
     common,
     special
@@ -16,7 +15,7 @@ class BFD_ITEM_DISK
 {
 public:
     // 设置默认构造
-    BFD_ITEM_DISK(){}
+    BFD_ITEM_DISK() {}
     BFD_ITEM_DISK(int dinode_ID,    // i结点的id
                   unsigned int master_ID,    // 文件拥有者ID
                   file_type f_type,          // 文件类型
@@ -76,6 +75,7 @@ public:
     BFD_DISK();
     // 根据sfd给的索引结号寻找到相应的inode信息
     BFD_ITEM_DISK findInodeByNum(int need_num);
+    int getFreeInode();
     bool addInode(BFD_ITEM_DISK item);
     bool delInode(BFD_ITEM_DISK item);
 };

@@ -115,18 +115,22 @@ void BFD_ITEM_DISK::setAuth(const vector<char> &value)
 
 BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
 {
-    for(BFD_ITEM_DISK temp : this->BFD_DISK_list)
-    {
-        if(temp.getDinode_ID() == need_num)
+    for(BFD_ITEM_DISK temp : this->BFD_DISK_list) {
+        if(temp.getDinode_ID() == need_num) {
             return temp;
-        else
-        {
+        } else {
             BFD_ITEM_DISK temp = BFD_ITEM_DISK();
             temp.setDinode_ID(-1);
             return temp;
         }
     }
+}
 
+// TODO: get空闲InodeID
+int BFD_DISK::getFreeInode()
+{
+    if(this->BFD_DISK_list.size() >= )
+    }
 }
 
 bool BFD_DISK::addInode(BFD_ITEM_DISK item)
@@ -139,10 +143,8 @@ bool BFD_DISK::delInode(BFD_ITEM_DISK item)
 {
     for(vector<BFD_ITEM_DISK>::iterator it = this->BFD_DISK_list.begin();
         it != this->BFD_DISK_list.end();
-        it ++)
-    {
-        if(item.getDinode_ID() == it->getDinode_ID())
-        {
+        it ++) {
+        if(item.getDinode_ID() == it->getDinode_ID()) {
             this->BFD_DISK_list.erase(it);
             return true;
         }
