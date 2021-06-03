@@ -79,6 +79,9 @@ public:
     time_t getFileCreateTime(QString file_path);
     // 获取用户密码
     string getUserPass(string user_name);
+    // 根据用户名寻找用户id
+    int getUserIdByUsenName(string user_name);
+
     // 新增用户
     void addUser(string user_name);
     // 删除用户
@@ -103,6 +106,8 @@ public:
     QString getFileAuth(QString path);
     // 修改文件权限
     void changeFileAuth(QString path, QString auth);
+    // 复制文件 1表示需要复制原文件修改时间和权限 0表示新文件拥有自己的修改时间和权限
+    void copy_file(QString source,QString dest,int flag);
 
 private:
     // 成组链接的首个超级块
