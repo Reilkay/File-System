@@ -599,6 +599,48 @@ int DISK::getUserGroup(string user_name)
     }
 }
 
+QString DISK::readFile(QString path)
+{
+    int tmp_inode_index = findFile(path);
+    unsigned int addr_first = this->d_inodes.findInodeByNum(tmp_inode_index).getF_addr();
+    if(d_block[addr_first].getBlock_type() == CONTENT) {
+        return QString(QLatin1String(d_block[addr_first].getData()));
+    } else {
+        QString tmp_content;
+        vector<int> addr_seconds = d_block[addr_first].getIndex();
+        for(int i = 0; i < d_block[addr_first].getIndex_num(); i++) {
+            if(d_block[addr_seconds[i]].getBlock_type() == CONTENT) {
+                tmp_content += QString(QLatin1String(d_block[addr_seconds[i]].getData()));
+            } else {
+                vector<int> addr_thirds = d_block[addr_seconds[i]].getIndex();
+                for(int j = 0; i < d_block[addr_seconds[i]].getIndex_num(); j++) {
+                    if(d_block[addr_thirds[j]].getBlock_type() == CONTENT) {
+                        tmp_content += QString(QLatin1String(d_block[addr_thirds[j]].getData()));
+                    }
+                }
+            }
+        }
+        return tmp_content;
+    }
+}
+
+QString DISK::readFileByLine(QString path)
+{
+    int tmp_inode_index = findFile(path);
+    unsigned int addr_first = this->d_inodes.findInodeByNum(tmp_inode_index).getF_addr();
+    if(d_block[addr_first].getBlock_type() == CONTENT) {
+        return QString(QLatin1String(d_block[addr_first].getData()));
+    } else {
+        diskblock_type tmp_type = INDEX;
+        unsigned int tmp_addr = addr_first;
+        while(tmp_type == INDEX) {
+            tmp_addr = d_block[tmp_addr].getIndex()[0];
+            tmp_type = d_block[tmp_addr].getBlock_type();
+        }
+        return QString(QLatin1String(d_block[tmp_addr].getData()));
+    }
+}
+
 void DISK::chang_user_pass(string user_name, string pass)
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();

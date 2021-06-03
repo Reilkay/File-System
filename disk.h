@@ -74,7 +74,10 @@ public:
     void delUser(string user_name);
     // 获取用户对应的用户组
     int getUserGroup(string user_name);
-    // TODO: 读取指定文件
+    // 读取指定文件
+    QString readFile(QString path);
+    // 读取指定文件的一行
+    QString readFileByLine(QString path);
 
 
 
