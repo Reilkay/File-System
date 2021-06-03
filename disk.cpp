@@ -98,33 +98,151 @@ bool DISK::saveFile(char* content)
     }
 }
 
-bool DISK::delFile(QString file_path)
-{
-    QStringList split_path = file_path.split("/");
-
-    // TODO:成组链接法删除
-
-    return true;
-}
-
 vector<SFD> DISK::getAll_sfd() const
 {
     return all_sfd;
 }
 
-//int DISK::findFile(string file_name)
+
+
+
+// 寻找文件 返回inode的id 非常非常重要
+int DISK::findFile(QString file_path)
+{
+    QStringList split_path = file_path.split("/");
+    // 层数
+    int layer = 0;
+    int layer_max = split_path.size();
+    int total_layer = this->all_sfd.size();
+    int cur_layer = 0;
+    // 防止超出系统层数
+    while(layer++ && layer <= layer_max)
+    {
+        // 重要的是 更新cur_layer
+        // 从all_SFD中遍历搜索
+        for(SFD_ITEM i:this->all_sfd[cur_layer].getSFD_list())
+        {
+            if(i.getFile_name() == split_path[layer].toStdString())
+            {
+                // 如果找到 且当前是最后一级目录 就返回id
+                if(layer==layer_max)
+                {
+                    return i.getID();
+                }
+                // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
+                // 不是最后一级目录 却找到了文件 直接返回-1
+                else if(layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type()!=directory)
+                {
+                    return -1;
+                }
+                // 不是最后一级目录 找到了文件夹 更新cur_layer
+                else if(layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type()==directory)
+                {
+                    cur_layer = this->find_sfd_index_in_total_sfd(all_sfd[cur_layer]);
+                }
+                continue;
+            }
+        }
+    }
+    return -1;
+}
+
+
+bool DISK::delFile(QString file_path)
+{
+    QStringList split_path = file_path.split("/");
+    // ------------------------------如果是文件夹 需要根据SFD的层数进行DFS------------------------------------
+    int dir_dfs_layer_begin = split_path.size();
+
+    int inode_id = this->findFile(file_path);
+    // 当没有这个文件的时候 删除失败 直接返回-1
+    if(inode_id == -1)
+    {
+        return false;
+    }
+    else
+    {
+        // 当寻找到的文件类型为文件夹 涉及到递归级联删除
+        if(this->d_inodes.findInodeByNum(inode_id).getF_type() == directory)
+        {
+            // 解除DFS循环
+            if()
+            // 根据层数进行DFS
+            for()
+            {
+                // TODO:
+                delFile(file_path + "");
+            }
+        }
+        // 不是文件夹 直接删除就行 不用动磁盘块内容 只需要删除SFD和BFD即可
+        else
+        {
+            // 找到对应的SFD
+            unsigned long long layer = 0;
+            int layer_max = split_path.size();
+            unsigned long long total_layer = this->all_sfd.size();
+            // 防止超出系统层数
+            while(layer++ && layer <= total_layer)
+            {
+                for(vector<SFD_ITEM>::iterator it = this->all_sfd[layer].getSFD_list().begin();
+                    it != this->all_sfd[layer].getSFD_list().end();
+                    it++)
+                {
+                    if(it->getFile_name() == split_path[(int)layer].toStdString())
+                    {
+                        // 如果找到 直接删除 TODO:归还空块
+                        if(layer == (unsigned long long)layer_max)
+                        {
+                            // 删除SFD信息
+                            this->all_sfd[layer].getSFD_list().erase(it);
+                            // 删除BFD信息
+                            for(vector<BFD_ITEM_DISK>::iterator it2 = this->d_inodes.getBFD_DISK_list().begin();
+                                it2 != this->d_inodes.getBFD_DISK_list().end();
+                                it2++)
+                            {
+                                if(it2->getDinode_ID() == inode_id)
+                                {
+                                    this->d_inodes.getBFD_DISK_list().erase(it2);
+                                }
+                            }
+                            return true;
+                        }
+                        else
+                            continue;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+//void DISK::Dfs_del_dir(int cur_layer,int max_layer)
 //{
-//    for(SFD temp_sfd : this->all_sfd)
+//    // 达到最深的目录
+//    if(cur_layer >= max_layer)
 //    {
-//        // 找到了直接return
-//        if(temp_sfd.findSfd_item(file_name) != -1)
-//            return temp_sfd.findSfd_item(file_name);
+//        return;
 //    }
-//    return -1;
+//    else
+//    {
+//        if()=]
+//        Dfs_del_dir(cur_layer+1,max_layer);
+//    }
 //}
 
 void DISK::setAll_sfd(const vector<SFD> &value)
 {
     all_sfd = value;
+}
+
+int DISK::find_sfd_index_in_total_sfd(SFD temp_sfd)
+{
+    for(unsigned long long i=0;i<this->all_sfd.size();i++)
+    {
+        if(this->all_sfd[i].getSFD_ID() == temp_sfd.getSFD_ID())
+            return i;
+    }
+    return -1;
 }
 

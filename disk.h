@@ -8,6 +8,7 @@
 #include "sfd.h"
 #include <QString>
 #include <QAbstractItemModel>
+#include "dinode.h"
 
 
 // TODO: DISK
@@ -40,9 +41,13 @@ public:
     vector<SFD> getAll_sfd() const;
 
     // 从所有SFD中寻找文件 返回inode索引 否则返回-1
-    int findFile(string file_path);
+    int findFile(QString file_path);
 
     void setAll_sfd(const vector<SFD> &value);
+
+    void Dfs_del_dir(int cur_layer,int max_layer);
+
+    int find_sfd_index_in_total_sfd(SFD temp_sfd);
 
 private:
     // 成组链接的首个超级块

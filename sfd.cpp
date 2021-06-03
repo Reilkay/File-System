@@ -30,6 +30,16 @@ void SFD::setSFD_ID(int value)
     SFD_ID = value;
 }
 
+vector<SFD_ITEM> SFD::getSFD_list() const
+{
+    return SFD_list;
+}
+
+void SFD::setSFD_list(const vector<SFD_ITEM> &value)
+{
+    SFD_list = value;
+}
+
 int SFD::findSfd_item(string file_name)
 {
     for(SFD_ITEM i : SFD_list)

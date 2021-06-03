@@ -78,6 +78,8 @@ public:
     BFD_ITEM_DISK findInodeByNum(int need_num);
     bool addInode(BFD_ITEM_DISK item);
     bool delInode(BFD_ITEM_DISK item);
+    vector<BFD_ITEM_DISK> getBFD_DISK_list() const;
+    void setBFD_DISK_list(const vector<BFD_ITEM_DISK> &value);
 };
 
 #endif // DINODE_H
