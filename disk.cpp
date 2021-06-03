@@ -528,6 +528,9 @@ void DISK::copy_file(QString source, QString dest, int flag)
 int DISK::getFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/", QString::SkipEmptyParts);
+    if(file_path == "/") {
+        return 0;
+    }
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -544,7 +547,7 @@ int DISK::getFileCurPathIndex(QString file_path)
                     break;
                 }
                 // 进入文件夹下
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                else if (layer != layer_max - 1 && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->findSfdIndexInTotalSfd(
                                     this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
@@ -558,6 +561,9 @@ int DISK::getFileCurPathIndex(QString file_path)
 int DISK::nofilenameGetFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/", QString::SkipEmptyParts);
+    if(file_path == "/") {
+        return 0;
+    }
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -576,7 +582,7 @@ int DISK::nofilenameGetFileCurPathIndex(QString file_path)
                     break;
                 }
                 // 进入文件夹下
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                else if (layer != layer_max - 1 && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->findSfdIndexInTotalSfd(
                                     this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
