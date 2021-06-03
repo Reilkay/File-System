@@ -52,29 +52,30 @@ public:
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
 
     // 根据sfd_id寻找sfd
-    int find_sfd(int sfd_id);
+    int findSfd(int sfd_id);
     // 获取文件权限
     QString getFileAuth(QString path);
     // 修改文件权限
     void changeFileAuth(QString path, QString auth);
 
     // 文件是否为空 为空返回true
-    bool file_is_empty(QString file_path);
+    bool fileIsEmpty(QString file_path);
     // 获取文件类型
-    file_type get_file_type(QString file_path);
+    file_type getFileType(QString file_path);
     // 更改文件名
-    void change_file_name(QString source,QString dest);
+    void changeFileName(QString source, QString dest);
     // 获取文件修改时间
-    time_t get_file_change_time(QString file_path);
+    time_t getFileChangeTime(QString file_path);
     // 获取用户密码
-    string get_user_pass(string user_name);
+    string getUserPass(string user_name);
     // 新增用户
-    void add_user(string user_name);
+    void addUser(string user_name);
     // 删除用户
-    void del_user(string user_name);
+    void delUser(string user_name);
     // 获取用户对应的用户组
-    int get_user_group(string user_name);
-    //
+    int getUserGroup(string user_name);
+    // TODO: 读取指定文件
+
 
 
 
