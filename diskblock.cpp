@@ -5,7 +5,7 @@
 // 方法实现
 DISK_BLOCK::DISK_BLOCK()
 {
-    this->index.resize(BLOCKSIZE / sizeof (int));
+    this->index.reserve(BLOCKSIZE / sizeof (int));
 }
 
 int DISK_BLOCK::getBlock_num() const

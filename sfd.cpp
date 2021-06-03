@@ -42,10 +42,8 @@ void SFD::setSFD_list(const vector<SFD_ITEM> &value)
 
 int SFD::findSfd_item(string file_name)
 {
-    for(SFD_ITEM i : SFD_list)
-    {
-        if(i.getFile_name() == file_name)
-        {
+    for(SFD_ITEM i : SFD_list) {
+        if(i.getFile_name() == file_name) {
             return i.getID();
         }
     }
@@ -64,13 +62,15 @@ bool SFD::delSfd_item(string file_name)
 {
     for(vector<SFD_ITEM>::iterator it = this->SFD_list.begin();
         it != this->SFD_list.end();
-        it ++)
-    {
-        if(it->getFile_name() == file_name)
-        {
-           this->SFD_list.erase(it);
-           return true;
+        it ++) {
+        if(it->getFile_name() == file_name) {
+            this->SFD_list.erase(it);
+            return true;
         }
     }
     return false;
 }
+
+SFD_ITEM::SFD_ITEM(const string &file_name, int ID) : file_name(file_name),
+    ID(ID)
+{}

@@ -32,7 +32,7 @@ public:
     USER getUser_table() const;
     void setUser_table(const USER &value);
 
-    bool createNewFile(string path);
+    bool createNewFile(string path, unsigned int master_ID);
     bool saveFile(char* content);
 
     // TODO:做多文件
@@ -46,7 +46,7 @@ public:
 
     void setAll_sfd(const vector<SFD> &value);
 
-    void Dfs_del_dir(int cur_layer,int max_layer);
+    void Dfs_del_dir(int cur_layer, int max_layer);
 
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
 

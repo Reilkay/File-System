@@ -169,8 +169,9 @@ int DISK::findFile(QString file_path)
     }
     return -1;
 }
+
 // TODO
-bool DISK::createNewFile(string path)
+bool DISK::createNewFile(string path, unsigned int master_ID)
 {
     string dirpath, filename;
     //划分目录和文件
@@ -182,24 +183,40 @@ bool DISK::createNewFile(string path)
     }
     dirpath = path.substr(0, split_index);
     filename = path.substr(split_index + 1, path.length());
-    int tmp_inode_id = findFile(QString::fromStdString(dirpath));
-    if (tmp_inode_id < 0) {
+    int dir_inode_id = findFile(QString::fromStdString(dirpath));
+    if (dir_inode_id < 0) {
         // 文件目录不存在
         return false;
     }
-    BFD_ITEM_DISK tmp_bfd_item = d_inodes.findInodeByNum(tmp_inode_id);
+    BFD_ITEM_DISK tmp_bfd_item = d_inodes.findInodeByNum(dir_inode_id);
     // 检查重名问题
-    if (all_sfd[tmp_bfd_item.getDinode_ID()].findSfd_item(filename) != -1) {
+    if (all_sfd[tmp_bfd_item.getF_addr()].findSfd_item(filename) != -1) {
         // 有同名文件
         return false;
     }
     // 检测是否有空闲i节点
-    BFD_ITEM_DISK tmp_dinode;
-    int inode_id = d_inodes.getFreeInode();
-    if (inode_id < 0) {
+    int free_inode_id = d_inodes.getFreeInode();
+    if (free_inode_id < 0) {
         // i节点用尽
         return false;
     }
+    vector<char> auth = {'7', '5', '5'};
+    time_t tmp_time;
+    time(&tmp_time); //当前time_t类型UTC时间
+    BFD_ITEM_DISK tmp_dinode(free_inode_id,     // i结点的id
+                             master_ID,         // 文件拥有者ID
+                             COMMON,            // 文件类型
+                             auth,              // 权限（三位十进制数表示）
+                             0,                 // 文件大小
+                             -1,                // 文件地址（物理地址/下级目录ID）
+                             0,                 // 文件链接计数
+                             tmp_time,       // 文件创建时间
+                             tmp_time);
+    // 保存i节点
+    d_inodes.addInode(tmp_dinode);
+    //添加至目录下
+    SFD_ITEM tmp_sfd_item(filename, free_inode_id);
+    all_sfd[tmp_bfd_item.getF_addr()].addSfd_item(tmp_sfd_item);
 }
 
 bool DISK::delFile(QString file_path)

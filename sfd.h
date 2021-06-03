@@ -8,6 +8,9 @@ using namespace std;
 class SFD_ITEM
 {
 public:
+    SFD_ITEM();
+    SFD_ITEM(const string &file_name, int ID);
+
     string getFile_name() const;
     void setFile_name(const string &value);
 
