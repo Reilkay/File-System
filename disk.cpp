@@ -430,7 +430,11 @@ int DISK::find_sfd(int sfd_id)
 QString DISK::getFileAuth(QString path)
 {
     QString resu;
-    // TODO: 获取文件类别
+    if(get_file_type(path) == DIRECTORY) {
+        resu += "d";
+    } else {
+        resu += "-";
+    }
     for (int i = 0; i < 3; i++) {
         int tmp_auth = d_inodes.findInodeByNum(findFile(path)).getAuth()[i] - '0';
         switch (tmp_auth) {
@@ -474,123 +478,146 @@ void DISK::changeFileAuth(QString path, QString auth)
         tmp_auth[i] = j + '0';
     }
     d_inodes.findInodeByNum(findFile(path)).setAuth(tmp_auth);
-    bool DISK::file_is_empty(QString file_path) {
-        int temp_inode_index = findFile(file_path);
-        if (this->d_inodes.findInodeByNum(temp_inode_index).getF_size() == 0) {
-            return true;
-        } else {
-            return false;
-        }
+}
+
+bool DISK::file_is_empty(QString file_path)
+{
+    int temp_inode_index = findFile(file_path);
+    if (this->d_inodes.findInodeByNum(temp_inode_index).getF_size() == 0) {
+        return true;
+    } else {
+        return false;
     }
-    file_type DISK::get_file_type(QString file_path) {
-        int temp_inode_index = findFile(file_path);
-        return this->d_inodes.findInodeByNum(temp_inode_index).getF_type();
-    }
-    void DISK::change_file_name(QString source, QString dest) {
-        int source_inode_id = findFile(source);
-        int dest_inode_id = findFile(dest);
-        int temp_inode_index = findFile(source);
-        // 从SFD中修改
-        QStringList split_path = source.split("/");
-        // 层数
-        int layer = 0;
-        int layer_max = split_path.size();
-        int total_layer = this->all_sfd.size();
-        int cur_layer_source = 0;
-        // 防止超出系统层数
-        while (layer < layer_max) {
-            // 重要的是 更新cur_layer
-            // 从all_SFD中遍历搜索
-            for (SFD_ITEM i : this->all_sfd[cur_layer_source].getSFD_list()) {
-                if (i.getFile_name() == split_path[layer].toStdString()) {
-                    // 如果找到 且当前是最后一级目录 就返回id
-                    if (layer == layer_max - 1) {
-                        break;
-                    } else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                        cur_layer_source = this->find_sfd_index_in_total_sfd(
-                                               this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
-                    }
+}
+
+file_type DISK::get_file_type(QString file_path)
+{
+    int temp_inode_index = findFile(file_path);
+    return this->d_inodes.findInodeByNum(temp_inode_index).getF_type();
+}
+
+void DISK::change_file_name(QString source, QString dest)
+{
+    int source_inode_id = findFile(source);
+    int dest_inode_id = findFile(dest);
+    int temp_inode_index = findFile(source);
+    // 从SFD中修改
+    QStringList split_path = source.split("/");
+    // 层数
+    int layer = 0;
+    int layer_max = split_path.size();
+    int total_layer = this->all_sfd.size();
+    int cur_layer_source = 0;
+    // 防止超出系统层数
+    while (layer < layer_max) {
+        // 重要的是 更新cur_layer
+        // 从all_SFD中遍历搜索
+        for (SFD_ITEM i : this->all_sfd[cur_layer_source].getSFD_list()) {
+            if (i.getFile_name() == split_path[layer].toStdString()) {
+                // 如果找到 且当前是最后一级目录 就返回id
+                if (layer == layer_max - 1) {
+                    break;
+                } else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                    cur_layer_source = this->find_sfd_index_in_total_sfd(
+                                           this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
             }
-            layer++;
         }
-        layer = 0;
-        layer_max = split_path.size();
-        total_layer = this->all_sfd.size();
-        int cur_layer_dest = 0;
-        // 防止超出系统层数
-        while (layer < layer_max) {
-            // 重要的是 更新cur_layer
-            // 从all_SFD中遍历搜索
-            for (SFD_ITEM i : this->all_sfd[cur_layer_dest].getSFD_list()) {
-                if (i.getFile_name() == split_path[layer].toStdString()) {
-                    // 如果找到 且当前是最后一级目录 就返回id
-                    if (layer == layer_max - 1) {
-                        break;
-                    } else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                        cur_layer_dest = this->find_sfd_index_in_total_sfd(
-                                             this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
-                    }
+        layer++;
+    }
+    layer = 0;
+    layer_max = split_path.size();
+    total_layer = this->all_sfd.size();
+    int cur_layer_dest = 0;
+    // 防止超出系统层数
+    while (layer < layer_max) {
+        // 重要的是 更新cur_layer
+        // 从all_SFD中遍历搜索
+        for (SFD_ITEM i : this->all_sfd[cur_layer_dest].getSFD_list()) {
+            if (i.getFile_name() == split_path[layer].toStdString()) {
+                // 如果找到 且当前是最后一级目录 就返回id
+                if (layer == layer_max - 1) {
+                    break;
+                } else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                    cur_layer_dest = this->find_sfd_index_in_total_sfd(
+                                         this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
             }
-            layer++;
         }
-        for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
-             it != this->all_sfd[cur_layer].getSFD_list().end();
-             it++) {
-            if (it->getID() == inode_id) {
-                this->all_sfd[cur_layer].getSFD_list().erase(it);
-            }
-        }
+        layer++;
     }
-    time_t DISK::get_file_change_time(QString file_path) {
-        int temp_inode_index = findFile(file_path);
-        return this->d_inodes.findInodeByNum(temp_inode_index).getF_change_time();
-    }
-    string DISK::get_user_pass(string user_name) {
-        return this->user_table.find_user(user_name).getUserpwd();
-    }
-    void DISK::add_user(string user_name) {
-        USER *temp_user = new USER();
-        temp_user->setId(this->user_table.getUser_table().back().getId() + 1);
-        temp_user->setUserpwd("123456");
-        temp_user->setUsergrp(1);
-        temp_user->setUsername(user_name);
-        this->user_table.add_user(*temp_user);
-    }
-    void DISK::del_user(string user_name) {
-        for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
-             it != this->user_table.getUser_table().end();
-             it++) {
-            if (it->getUsername() == user_name) {
-                this->user_table.getUser_table().erase(it);
-                return;
-            }
+    for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
+         it != this->all_sfd[cur_layer].getSFD_list().end();
+         it++) {
+        if (it->getID() == inode_id) {
+            this->all_sfd[cur_layer].getSFD_list().erase(it);
         }
     }
-    int DISK::get_user_group(string user_name) {
-        for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
-             it != this->user_table.getUser_table().end();
-             it++) {
-            if (it->getUsername() == user_name) {
-                return it->getUsergrp();
-            }
+}
+
+time_t DISK::get_file_change_time(QString file_path)
+{
+    int temp_inode_index = findFile(file_path);
+    return this->d_inodes.findInodeByNum(temp_inode_index).getF_change_time();
+}
+
+string DISK::get_user_pass(string user_name)
+{
+    return this->user_table.find_user(user_name).getUserpwd();
+}
+
+void DISK::add_user(string user_name)
+{
+    USER *temp_user = new USER();
+    temp_user->setId(this->user_table.getUser_table().back().getId() + 1);
+    temp_user->setUserpwd("123456");
+    temp_user->setUsergrp(1);
+    temp_user->setUsername(user_name);
+    this->user_table.add_user(*temp_user);
+}
+
+void DISK::del_user(string user_name)
+{
+    for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
+         it != this->user_table.getUser_table().end();
+         it++) {
+        if (it->getUsername() == user_name) {
+            this->user_table.getUser_table().erase(it);
+            return;
         }
     }
-    void DISK::chang_user_pass(string user_name, string pass) {
-        for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
-             it != this->user_table.getUser_table().end();
-             it++) {
-            if (it->getUsername() == user_name) {
-                it->setUserpwd(pass);
-                return;
-            }
+}
+
+int DISK::get_user_group(string user_name)
+{
+    for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
+         it != this->user_table.getUser_table().end();
+         it++) {
+        if (it->getUsername() == user_name) {
+            return it->getUsergrp();
         }
-        return;
     }
-    USER_TABLE DISK::getUser_table() const {
-        return user_table;
+}
+
+void DISK::chang_user_pass(string user_name, string pass)
+{
+    for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
+         it != this->user_table.getUser_table().end();
+         it++) {
+        if (it->getUsername() == user_name) {
+            it->setUserpwd(pass);
+            return;
+        }
     }
-    void DISK::setUser_table(const USER_TABLE & value) {
-        user_table = value;
-    }
+    return;
+}
+
+USER_TABLE DISK::getUser_table() const
+{
+    return user_table;
+}
+
+void DISK::setUser_table(const USER_TABLE & value)
+{
+    user_table = value;
+}
