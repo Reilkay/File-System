@@ -220,8 +220,8 @@ int DISK::findFile(QString file_path)
                 }
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
                 else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                    cur_layer = this->find_sfd_index_in_total_sfd(
-                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
+                    cur_layer = this->findSfdIndexInTotalSfd(
+                                    this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
             }
         }
@@ -296,7 +296,7 @@ void DISK::delFile(QString file_path)
         }
     }
     // 从SFD中删除
-    int cur_layer = get_file_cur_path_index(file_path);
+    int cur_layer = getFileCurPathIndex(file_path);
     for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
          it != this->all_sfd[cur_layer].getSFD_list().end();
          it++) {
@@ -402,7 +402,7 @@ void DISK::setAll_sfd(const vector<SFD> &value)
     all_sfd = value;
 }
 
-int DISK::find_sfd_index_in_total_sfd(SFD temp_sfd)
+int DISK::findSfdIndexInTotalSfd(SFD temp_sfd)
 {
     for (unsigned long long i = 0; i < this->all_sfd.size(); i++) {
         if (this->all_sfd[i].getSFD_ID() == temp_sfd.getSFD_ID()) {
@@ -412,7 +412,7 @@ int DISK::find_sfd_index_in_total_sfd(SFD temp_sfd)
     return -1;
 }
 
-int DISK::find_sfd(int sfd_id)
+int DISK::findSfd(int sfd_id)
 {
     for (unsigned int i = 0; i < all_sfd.size(); i++) {
         if (all_sfd[i].getSFD_ID() == sfd_id) {
@@ -476,7 +476,7 @@ void DISK::changeFileAuth(QString path, QString auth)
     tmp.setAuth(tmp_auth);
     d_inodes.changeInodeByNum(findFile(path), tmp);
 }
-int DISK::get_file_cur_path_index(QString file_path)
+int DISK::getFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/");
     // 层数
@@ -496,8 +496,8 @@ int DISK::get_file_cur_path_index(QString file_path)
                 }
                 // 进入文件夹下
                 else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                    cur_layer = this->find_sfd_index_in_total_sfd(
-                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
+                    cur_layer = this->findSfdIndexInTotalSfd(
+                                    this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
             }
         }
@@ -506,7 +506,7 @@ int DISK::get_file_cur_path_index(QString file_path)
     return cur_layer;
 }
 
-int DISK::nofilename_get_file_cur_path_index(QString file_path)
+int DISK::nofilenameGetFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/");
     // 层数
@@ -522,14 +522,14 @@ int DISK::nofilename_get_file_cur_path_index(QString file_path)
             if (i.getFile_name() == split_path[layer].toStdString()) {
                 // 如果找到 且当前是最后一级目录 就返回id
                 if (layer == layer_max - 1) {
-                    cur_layer = this->find_sfd_index_in_total_sfd(
-                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
+                    cur_layer = this->findSfdIndexInTotalSfd(
+                                    this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                     break;
                 }
                 // 进入文件夹下
                 else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                    cur_layer = this->find_sfd_index_in_total_sfd(
-                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
+                    cur_layer = this->findSfdIndexInTotalSfd(
+                                    this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
             }
         }
@@ -538,7 +538,7 @@ int DISK::nofilename_get_file_cur_path_index(QString file_path)
     return cur_layer;
 }
 
-bool DISK::file_is_empty(QString file_path)
+bool DISK::fileIsEmpty(QString file_path)
 {
     int temp_inode_index = findFile(file_path);
     if (this->d_inodes.findInodeByNum(temp_inode_index).getF_size() == 0) {
@@ -548,10 +548,10 @@ bool DISK::file_is_empty(QString file_path)
     }
 }
 
-void DISK::move_file_to_dir(QString source, QString dest)
+void DISK::moveFileToDir(QString source, QString dest)
 {
-    int file_layer = get_file_cur_path_index(source);
-    int dir_layer = nofilename_get_file_cur_path_index(dest);
+    int file_layer = getFileCurPathIndex(source);
+    int dir_layer = nofilenameGetFileCurPathIndex(dest);
     QStringList split_path = source.split("/");
     string old_file_name = split_path.back().toStdString();
     // 找到文件 然后填在文件夹里 同时删除
@@ -567,9 +567,9 @@ void DISK::move_file_to_dir(QString source, QString dest)
     }
 }
 
-QStringList DISK::get_file_list(QString file_path)
+QStringList DISK::getFileList(QString file_path)
 {
-    int sfd_index = nofilename_get_file_cur_path_index(file_path);
+    int sfd_index = nofilenameGetFileCurPathIndex(file_path);
     QStringList ans_list;
     for (SFD_ITEM i : all_sfd[sfd_index].getSFD_list()) {
         ans_list.append(QString::fromStdString(i.getFile_name()));
@@ -577,15 +577,15 @@ QStringList DISK::get_file_list(QString file_path)
     return ans_list;
 }
 
-file_type DISK::get_file_type(QString file_path)
+file_type DISK::getFileType(QString file_path)
 {
     int temp_inode_index = findFile(file_path);
     return this->d_inodes.findInodeByNum(temp_inode_index).getF_type();
 }
 
-void DISK::change_file_name(QString source, QString dest)
+void DISK::changeFileName(QString source, QString dest)
 {
-    int sfd_index = get_file_cur_path_index(source);
+    int sfd_index = getFileCurPathIndex(source);
     QStringList split_path = dest.split("/");
     QStringList split_path2 = source.split("/");
     string new_file_name = split_path.back().toStdString();
@@ -600,13 +600,13 @@ void DISK::change_file_name(QString source, QString dest)
     return;
 }
 
-time_t DISK::get_file_change_time(QString file_path)
+time_t DISK::getFileChangeTime(QString file_path)
 {
     int temp_inode_index = findFile(file_path);
     return this->d_inodes.findInodeByNum(temp_inode_index).getF_change_time();
 }
 
-string DISK::get_file_creater(QString file_path)
+string DISK::getFileCreater(QString file_path)
 {
     int temp_inode_index = findFile(file_path);
     BFD_ITEM_DISK temp = d_inodes.findInodeByNum(temp_inode_index);
@@ -618,18 +618,18 @@ string DISK::get_file_creater(QString file_path)
     }
 }
 
-time_t DISK::get_file_create_time(QString file_path)
+time_t DISK::getFileCreateTime(QString file_path)
 {
     int temp_inode_index = findFile(file_path);
     return this->d_inodes.findInodeByNum(temp_inode_index).getF_creat_time();
 }
 
-string DISK::get_user_pass(string user_name)
+string DISK::getUserPass(string user_name)
 {
     return this->user_table.find_user(user_name).getUserpwd();
 }
 
-void DISK::add_user(string user_name)
+void DISK::addUser(string user_name)
 {
     USER *temp_user = new USER();
     temp_user->setId(this->user_table.getUser_table().back().getId() + 1);
@@ -639,7 +639,7 @@ void DISK::add_user(string user_name)
     this->user_table.add_user(*temp_user);
 }
 
-void DISK::del_user(string user_name)
+void DISK::delUser(string user_name)
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
          it != this->user_table.getUser_table().end();
@@ -651,7 +651,7 @@ void DISK::del_user(string user_name)
     }
 }
 
-int DISK::get_user_group(string user_name)
+int DISK::getUserGroup(string user_name)
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
          it != this->user_table.getUser_table().end();
@@ -662,7 +662,7 @@ int DISK::get_user_group(string user_name)
     }
 }
 
-void DISK::change_user_pass(string user_name, string pass)
+void DISK::changeUserPass(string user_name, string pass)
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
          it != this->user_table.getUser_table().end();
@@ -675,7 +675,7 @@ void DISK::change_user_pass(string user_name, string pass)
     return;
 }
 
-bool DISK::user_exist(string user_name)
+bool DISK::userExist(string user_name)
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
          it != this->user_table.getUser_table().end();
@@ -723,7 +723,7 @@ vector<int> DISK::getBlocksUsedByFile(int inode_id)
     }
     return resu;
 }
-string DISK::get_root_pass()
+string DISK::getRootPass()
 {
     for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
          it != this->user_table.getUser_table().end();
