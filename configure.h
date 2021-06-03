@@ -17,8 +17,6 @@
 #define PWDNUM      32
 // 每个用户最多可打开20个文件，即用户打开文件最大次数
 #define NOFILE      20
-// 每个i节点最多指向10块，addr[0]~addr[9]
-#define NADDR       10
 // 共128个Hash链表，提供索引i节点（必须为2的幂）
 #define NHINO       128
 // 最多允许10个用户登录

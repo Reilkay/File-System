@@ -36,6 +36,9 @@ public:
 
     int getSFD_ID() const;
     void setSFD_ID(int value);
+
+    vector<SFD_ITEM> getSFD_list() const;
+    void setSFD_list(const vector<SFD_ITEM> &value);
 };
 
 #endif // SFD_H

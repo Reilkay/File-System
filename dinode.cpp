@@ -1,4 +1,5 @@
 #include "dinode.h"
+#include "configure.h"
 
 BFD_ITEM_DISK::BFD_ITEM_DISK(int dinode_ID,     // i结点的id
                              unsigned int master_ID,     // 文件拥有者ID
@@ -111,6 +112,21 @@ vector<char> BFD_ITEM_DISK::getAuth() const
 void BFD_ITEM_DISK::setAuth(const vector<char> &value)
 {
     auth = value;
+}
+
+vector<BFD_ITEM_DISK> BFD_DISK::getBFD_DISK_list() const
+{
+    return BFD_DISK_list;
+}
+
+void BFD_DISK::setBFD_DISK_list(const vector<BFD_ITEM_DISK> &value)
+{
+    BFD_DISK_list = value;
+}
+
+BFD_DISK::BFD_DISK()
+{
+    this->BFD_DISK_list.resize(DINODEBLK * BLOCKSIZE / DINODESIZE);
 }
 
 BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
