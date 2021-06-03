@@ -29,7 +29,7 @@ private:
     int SFD_ID;
     vector<SFD_ITEM> SFD_list;
 public:
-    SFD();
+    SFD() {}
     // 在SFD中通过文件名寻找inode索引序号 返回-1表示没有
     int findSfd_item(string file_name);
     // 添加SFD表项 默认为真？？？
