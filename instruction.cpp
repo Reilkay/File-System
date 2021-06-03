@@ -137,17 +137,12 @@ QStringList get_true_path_list(QString str)
  * NAME
  *      ls - Displays the contents of the specified working directory
  * SYNOPSIS
- *      ls [-alrtAR] [name...]
+ *      ls [-alrt] [name...]
  */
 void ls(QStringList strList)
 {
     int length = strList.count();
-    if(length == 1)
-    {
-        qDebug()<<"ls: missing operand";
-        qDebug()<<"Try 'ls --help' for more information.";
-    }
-    else if(strList[1] == "--help")
+    if(length >= 2 && strList[1] == "--help")
     {
         qDebug()<<"Usage: ls [OPTION]... [FILE]...";
         qDebug()<<"List information about the FILEs (the current directory by default).";
@@ -272,7 +267,7 @@ void ls(QStringList strList)
         qDebug()<<"GNU coreutils online help: <http://www.gnu.org/software/coreutils/>";
         qDebug()<<"For complete documentation, run: info coreutils 'ls invocation'";
     }
-    else if(strList[1].length() > 1 && strList[1][0] == '-' && (strList[1][1] != 'a'|| strList[1][1] != 'l'|| strList[1][1] != 'r'|| strList[1][1] != 't'|| strList[1][1] != 'A'|| strList[1][1] != 'R'))
+    else if(length >= 2 && strList[1].length() > 1 && strList[1][0] == '-' && (strList[1][1] != 'a'|| strList[1][1] != 'l'|| strList[1][1] != 'r'|| strList[1][1] != 't'))
     {
         if(strList[1].length() == 2 && strList[1][1] == '-')
         {
@@ -292,28 +287,102 @@ void ls(QStringList strList)
     }
     else
     {
-        int status[6]={0,0,0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
-        for(int i=1;i<strList[1].length();i++)
+        QString file_name;
+        int status[4]={0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
+        if(length == 1)
+            file_name = Global_path;
+        else
         {
-            if(strList[1][i] == 'a')    //+父+本身+隐藏
-                status[0] = 1;
-            else if(strList[1][i] == 'l')   //详细信息
-                status[1] = 1;
-            else if(strList[1][i] == 'r')   //反序
-                status[2] = 1;
-            else if(strList[1][i] == 't')   //时间先后
-                status[3] = 1;
-            else if(strList[1][i] == 'A')   //+隐藏
-                status[4] = 1;
-            else if(strList[1][i] == 'R')   //目录下文件
-                status[5] = 1;
-            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            if(strList[1][0] == '-')
             {
-                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
-                qDebug()<<"Try 'rm --help' for more information.";
-                return ;
+                for(int i=1;i<strList[1].length();i++)
+                {
+                    if(strList[1][i] == 'a')    //+父+本身+隐藏
+                        status[0] = 1;
+                    else if(strList[1][i] == 'l')   //详细信息
+                        status[1] = 1;
+                    else if(strList[1][i] == 'r')   //反序
+                        status[2] = 1;
+                    else if(strList[1][i] == 't')   //时间先后
+                        status[3] = 1;
+                    else    //命令行会对第一个遇到的非附加功能符号进行报错
+                    {
+                        qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                        qDebug()<<"Try 'rm --help' for more information.";
+                        return ;
+                    }
+                }
+                file_name = strList[2];
+                file_name = get_true_path(file_name);
+            }
+            else
+            {
+                file_name = strList[1];
+                file_name = get_true_path(file_name);
             }
         }
+
+        QStringList file_list = get_file_list(file_name);
+        QStringList ans_list;
+        QString ans1 = "";
+        QString ans2 = "";
+        if(status[0] == 1)
+        {
+            QStringList work_path_list = file_name.split("/", QString::SkipEmptyParts);
+            QString work_path;
+            if(work_path_list.count() == 0)
+            {
+                work_path = "/";
+            }
+            else
+            {
+                work_path_list.removeLast();
+                if(work_path_list.count() == 0)
+                    work_path = "/";
+                else
+                    work_path = work_path_list.join("/");
+            }
+            if(status[2] == 1)
+            {
+                if(work_path != Global_path)
+                    ans1 = ans1 + get_permission(work_path) + QString(get_file_list(work_path).count()) + get_creator(work_path) + Global_user + get_filetime(work_path) +"..";
+                ans2 = ans2 + get_permission(Global_path) + QString(get_file_list(Global_path).count()) + get_creator(Global_path) + Global_user + get_filetime(Global_path) +".";
+            }
+            else
+            {
+                if(work_path != Global_path)
+                    ans1 = "..";
+                ans2 = ".";
+            }
+            ans_list << ans1 << ans2;
+        }
+        if(status[3] == 1)
+            qSort(file_list.begin(), file_list.end(), [](const QString& s1, const QString& s2){return get_file_create_time(s1) < get_file_create_time(s1); });
+
+        for(int i=0;i<file_list.count();i++)
+        {
+            QString ans = "";
+            QStringList temp_filename_list = file_list[i].split('/');
+            QString only_filename = temp_filename_list[temp_filename_list.count()-1];
+            if(only_filename[0] == '.' && status[0] != 1 )
+                continue ;
+            if(status[2] == 1)
+                ans = ans + get_permission(file_list[i]) + QString(get_file_list(file_list[i]).count()) + get_creator(file_list[i]) + Global_user + get_filetime(file_list[i]) + only_filename;
+            else
+                ans = only_filename;
+            ans_list << ans ;
+        }
+        if(status[3] == 1)
+        {
+            for(int i=ans_list.count()-1;i>=0;i++)
+                qDebug()<<ans_list[i];
+        }
+        else
+        {
+            for(int i=0;i<ans_list.count();i++)
+                qDebug()<<ans_list[i];
+        }
+
     }
 }
 
@@ -787,17 +856,20 @@ void rm(QStringList strList)
         }
 
         int status[2]={0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
-        for(int i=1;i<strList[1].length();i++)
+        if(file_place == 2)
         {
-            if(strList[1][i] == 'r')
-                status[0] = 1;
-            else if(strList[1][i] == 'i')
-                status[1] = 1;
-            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            for(int i=1;i<strList[1].length();i++)
             {
-                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
-                qDebug()<<"Try 'rm --help' for more information.";
-                return ;
+                if(strList[1][i] == 'r')
+                    status[0] = 1;
+                else if(strList[1][i] == 'i')
+                    status[1] = 1;
+                else    //命令行会对第一个遇到的非附加功能符号进行报错
+                {
+                    qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                    qDebug()<<"Try 'rm --help' for more information.";
+                    return ;
+                }
             }
         }
 
@@ -950,8 +1022,8 @@ void mv(QStringList strList)
         {
             if(length <= 2)
             {
-                qDebug()<<"rm: missing operand";
-                qDebug()<<"Try 'rm --help' for more information.";
+                qDebug()<<"mv: missing operand";
+                qDebug()<<"Try 'mv --help' for more information.";
                 return ;
             }
             file_place += 1;
@@ -964,23 +1036,26 @@ void mv(QStringList strList)
         }
 
         int status[5]={0,0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
-        for(int i=1;i<strList[1].length();i++)
+        if(file_place == 2)
         {
-            if(strList[1][i] == 'b')
-                status[0] = 1;
-            else if(strList[1][i] == 'i')
-                status[1] = 1;
-            else if(strList[1][i] == 'f')
-                status[2] = 1;
-            else if(strList[1][i] == 'n')
-                status[3] = 1;
-            else if(strList[1][i] == 'u')
-                status[4] = 1;
-            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            for(int i=1;i<strList[1].length();i++)
             {
-                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
-                qDebug()<<"Try 'rm --help' for more information.";
-                return ;
+                if(strList[1][i] == 'b')
+                    status[0] = 1;
+                else if(strList[1][i] == 'i')
+                    status[1] = 1;
+                else if(strList[1][i] == 'f')
+                    status[2] = 1;
+                else if(strList[1][i] == 'n')
+                    status[3] = 1;
+                else if(strList[1][i] == 'u')
+                    status[4] = 1;
+                else    //命令行会对第一个遇到的非附加功能符号进行报错
+                {
+                    qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                    qDebug()<<"Try 'rm --help' for more information.";
+                    return ;
+                }
             }
         }
 
@@ -1281,23 +1356,6 @@ void cp(QStringList strList)
     }
     else
     {
-        int status[3]={0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
-        for(int i=1;i<strList[1].length();i++)
-        {
-            if(strList[1][i] == 'f')
-                status[0] = 1;
-            else if(strList[1][i] == 'p')
-                status[1] = 1;
-            else if(strList[1][i] == 'r')
-                status[2] = 1;
-            else    //命令行会对第一个遇到的非附加功能符号进行报错
-            {
-                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
-                qDebug()<<"Try 'rm --help' for more information.";
-                return ;
-            }
-        }
-
         int file_place = 1;
         if(strList[1].mid(0,2) == "-p")file_place += 1;
         if(length <= file_place+1)
@@ -1306,6 +1364,28 @@ void cp(QStringList strList)
             qDebug()<<"Try 'cp --help' for more information.";
             return ;
         }
+
+        int status[3]={0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
+        if(file_place == 2)
+        {
+            for(int i=1;i<strList[1].length();i++)
+            {
+                if(strList[1][i] == 'f')
+                    status[0] = 1;
+                else if(strList[1][i] == 'p')
+                    status[1] = 1;
+                else if(strList[1][i] == 'r')
+                    status[2] = 1;
+                else    //命令行会对第一个遇到的非附加功能符号进行报错
+                {
+                    qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                    qDebug()<<"Try 'rm --help' for more information.";
+                    return ;
+                }
+            }
+        }
+
+
         QStringList source_file_list = get_true_path_list(strList[file_place]);
         QString dest_file = strList[file_place + 1];
         dest_file = get_true_path(dest_file);
@@ -1514,8 +1594,7 @@ void whereis(QStringList strList)
     }
     else
     {
-        QString file_name = strList[1];
-        file_name = get_true_path(file_name);
+        QString file_name = strList[1]; //模糊文件名，非全局路径
         QStringList ans_list = whereis_file(file_name);
         for(int i=0;i<ans_list.count();i++)
             qDebug()<<ans_list[i];
@@ -1539,8 +1618,7 @@ void find(QStringList strList)
     {
         QString directory_name = strList[1];
         directory_name = get_true_path(directory_name);
-        QString file_name = strList[2];
-        file_name = get_true_path(file_name);
+        QString file_name = strList[2]; //模糊文件名，非全局路径
 
         if(disk.findFile(directory_name) == -1)    //判断是否存在
         {
@@ -1940,6 +2018,7 @@ void passwd(QStringList strList)
         qDebug()<<"passwd: all authentication tokens updated sucefully.";
     else
         qDebug()<<"passwd: the two passwords are inconsistent, modification failed";
+    set_password(Global_user,get_pw1);
 }
 
 /*
@@ -2048,7 +2127,7 @@ void kill(QStringList strList,QString Global_user)
  * NAME
  *      Read a line of file
  * SYNOPSIS
- *      read [-a] filename
+ *      read filename
  */
 void read(QStringList strList)
 {
