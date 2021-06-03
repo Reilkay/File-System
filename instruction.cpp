@@ -114,7 +114,10 @@ QStringList get_true_path_list(QString str)
             continue;
         else if(path_list[i] == "*")
         {
-            QStringList file_list = get_file_list(new_path);
+            QStringList file_list;
+            if(disk.findFile(new_path) == -1)
+                return file_list;
+            file_list = get_file_list(new_path);
             for(int j=0;j<file_list.count();j++)
             {
                 new_path_list<<file_list[j];
@@ -434,21 +437,21 @@ void mkdir(QStringList strList)
         if(Global_user=="root")    //owner
         {
             if(permission[1] == 'r')
-                create_file(file_name);
+                create_directory(file_name);
             else
                 qDebug()<<"Permission denied";
         }
         else if(get_uesr_permissions(Global_user))   //获取权限，group
         {
             if(permission[4] == 'r')
-                create_file(file_name);
+                create_directory(file_name);
             else
                 qDebug()<<"Permission denied";
         }
         else    //others
         {
             if(permission[7] == 'r')
-                create_file(file_name);
+                create_directory(file_name);
             else
                 qDebug()<<"Permission denied";
         }
@@ -599,7 +602,7 @@ void rm_del(QString filename,int ask)
                 rm_del(file_list[i],ask);
             else
             {
-                QString delete_answer;
+                char delete_answer;
                 if(ask)
                 {
                     qDebug().nospace()<<"rm: remove file or directory ‘"<<file_list[i]<<"’?";
@@ -639,7 +642,7 @@ void rm_del(QString filename,int ask)
         }
     }
 
-    QString delete_answer;
+    char delete_answer;
     if(ask)
     {
         qDebug().nospace()<<"rm: remove file or directory ‘"<<filename<<"’?";
@@ -763,14 +766,6 @@ void rm(QStringList strList)
             }
             file_place += 1;
         }
-        QString file_name = strList[file_place];
-        file_name = get_true_path(file_name);
-
-        if(disk.findFile(file_name) == -1)
-        {
-            qDebug().nospace()<<"rm: failed to remove ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
-            return ;
-        }
 
         int status[2]={0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
         for(int i=1;i<strList[1].length();i++)
@@ -787,51 +782,69 @@ void rm(QStringList strList)
             }
         }
 
-        if(file_type(file_name) != "文件")    // 文件目录需以'-r'命令删除
+        QStringList file_name_list = get_true_path_list(strList[file_place]);
+        if(file_name_list.count() == 0)
         {
-            qDebug().nospace()<<"rm: remove regular file ‘"<<file_name<<"’?";
-            QString delete_answer = get_delete_answer();    //获取用户输入
-            if(delete_answer == 'y')
+            qDebug().nospace()<<"rm: failed to remove file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
+            return ;
+        }
+
+
+        for(int i=0;i<file_name_list.count();i++)
+        {
+            QString file_name =file_name_list[i];
+            if(disk.findFile(file_name) == -1)
             {
-                QString permission = file_permission(file_name);
-                //permission 格式为 ‘drwxrwxrwx'
-                if(Global_user=="root")    //owner
-                {
-                    if(permission[2] == 'w')
-                        delete_file(file_name);
-                    else
-                        qDebug()<<"Permission denied";
-                }
-                else if(get_uesr_permissions(Global_user))   //获取权限，group
-                {
-                    if(permission[5] == 'w')
-                        delete_file(file_name);
-                    else
-                        qDebug()<<"Permission denied";
-                }
-                else    //others
-                {
-                    if(permission[8] == 'w')
-                        delete_file(file_name);
-                    else
-                        qDebug()<<"Permission denied";
+                qDebug().nospace()<<"rm: failed to remove file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
+                return ;
             }
 
-            }
-        }
-        else
-        {
-            if(status[0] == 0)
-            {
-                qDebug().nospace()<<"rm: cannot remove ‘"<<strList[file_place]<<"’: Is a directory";
-            }
-            else
+            if(file_type(file_name) != "文件")    // 文件目录需以'-r'命令删除
             {
                 qDebug().nospace()<<"rm: remove regular file ‘"<<file_name<<"’?";
                 QString delete_answer = get_delete_answer();    //获取用户输入
                 if(delete_answer == 'y')
                 {
-                    rm_del(file_name,status[1]);       //-i需依次获取用户询问
+                    QString permission = file_permission(file_name);
+                    //permission 格式为 ‘drwxrwxrwx'
+                    if(Global_user=="root")    //owner
+                    {
+                        if(permission[2] == 'w')
+                            delete_file(file_name);
+                        else
+                            qDebug()<<"Permission denied";
+                    }
+                    else if(get_uesr_permissions(Global_user))   //获取权限，group
+                    {
+                        if(permission[5] == 'w')
+                            delete_file(file_name);
+                        else
+                            qDebug()<<"Permission denied";
+                    }
+                    else    //others
+                    {
+                        if(permission[8] == 'w')
+                            delete_file(file_name);
+                        else
+                            qDebug()<<"Permission denied";
+                }
+
+                }
+            }
+            else
+            {
+                if(status[0] == 0)
+                {
+                    qDebug().nospace()<<"rm: cannot remove ‘"<<strList[file_place]<<"’: Is a directory";
+                }
+                else
+                {
+                    qDebug().nospace()<<"rm: remove regular file ‘"<<file_name<<"’?";
+                    QString delete_answer = get_delete_answer();    //获取用户输入
+                    if(delete_answer == 'y')
+                    {
+                        rm_del(file_name,status[1]);       //-i需依次获取用户询问
+                    }
                 }
             }
         }
@@ -930,16 +943,6 @@ void mv(QStringList strList)
             qDebug()<<"Try 'mv --help' for more information.";
             return ;
         }
-        QString source_file = strList[file_place];
-        source_file = get_true_path(source_file);
-        QString dest_file = strList[file_place + 1];
-        dest_file = get_true_path(dest_file);
-
-        if(disk.findFile(source_file) == -1)    //判断是否存在
-        {
-            qDebug().nospace()<<"mv: failed to move file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
-            return ;
-        }
 
         int status[5]={0,0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
         for(int i=1;i<strList[1].length();i++)
@@ -962,156 +965,183 @@ void mv(QStringList strList)
             }
         }
 
-        QString type1 = get_file_type(source_file);
+        QStringList source_file_list = get_true_path_list(strList[file_place]);
+        QString dest_file = strList[file_place + 1];
+        dest_file = get_true_path(dest_file);
+        int dest_file_id = disk.findFile(dest_file);
 
-        if(disk.findFile(dest_file) == -1)
+        if(source_file_list.count() == 0)
         {
-            QString permission1 = file_permission(source_file);
-            QString permission2 = file_permission(dest_file);
-
-            if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
-            {
-                if(get_filetime(source_file) < get_filetime(dest_file))
-                    return ;
-            }
-
-            //permission 格式为 ‘drwxrwxrwx'
-            if(Global_user=="root")    //owner
-            {
-                if(permission1[2] != 'w' || permission2[2] != 'w')
-                {
-                    qDebug()<<"Permission denied";
-                    return ;
-                }
-            }
-            else if(get_uesr_permissions(Global_user))   //获取权限，group
-            {
-                if(permission1[5] != 'w' || permission2[5] != 'w')
-                {
-                    qDebug()<<"Permission denied";
-                    return ;
-                }
-            }
-            else    //others
-            {
-                if(permission1[8] != 'w' || permission2[8] != 'w')
-                {
-                    qDebug()<<"Permission denied";
-                    return ;
-                }
-            }
-
-            QString type2 = get_file_type(dest_file);
-
-            if(type1 == "文件" && type2 == "文件")  //对文件重命名
-            {
-                if(status[3] == 1)return ;  //-n不执行覆盖操作
-
-                char delete_answer = 'y';
-                if(status[2] != 1)  //-f无需询问
-                {
-                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
-                    delete_answer = get_delete_answer();
-                }
-                if(delete_answer == 'y')
-                {
-                    if(status[0] == 1)  //-b对原文件备份
-                        change_name(dest_file,dest_file+'~');
-                    else
-                        delete_file(dest_file);
-                    change_name(source_file,dest_file);
-                }
-            }
-            else if(type1 == "文件" && type2 == "目录") //将文件移动到目录下
-            {
-                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
-                {
-                    if(status[3] == 1)return ;  //-n不执行覆盖操作
-
-                    char delete_answer = 'y';
-                    if(status[2] != 1)  //-f无需询问
-                    {
-                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
-                        delete_answer = get_delete_answer();
-                    }
-                    if(delete_answer == 'y')
-                    {
-                        if(status[0] == 1)  //-b对原文件备份
-                            change_name(dest_file,dest_file+'~');
-                        else
-                            delete_file(dest_file);
-                        change_name(source_file,dest_file);
-                    }
-                }
-                else
-                    move_file_to_Directory(source_file,dest_file);
-            }
-            else if(type1 == "目录" && type2 == "目录")  //将目录移动到目录type2下
-            {
-                if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
-                {
-                    if(status[3] == 1)return ;  //-n不执行覆盖操作
-
-                    char delete_answer = 'y';
-                    if(status[2] != 1)  //-f无需询问
-                    {
-                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
-                        delete_answer = get_delete_answer();
-                    }
-                    if(delete_answer == 'y')
-                    {
-                        if(status[0] == 1)  //-b对原文件备份
-                            change_name(dest_file,dest_file+'~');
-                        else
-                            delete_file(dest_file);
-                        change_name(source_file,dest_file);
-                    }
-                }
-                else
-                    move_file_to_Directory(source_file,dest_file);
-            }
-            else if(type1 == "目录" && type1 == "文件")    //error
-            {
-                if(status[3] == 1)return ;  //-n不执行覆盖操作
-
-                char delete_answer = 'y';
-                if(status[2] != 1)  //-f无需询问
-                {
-                    qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
-                    delete_answer = get_delete_answer();
-                }
-                if(delete_answer == 'y')
-                {
-                    qDebug().nospace()<<"mv: cannot overwrite non-directory ‘"<<qPrintable(dest_file)<<"’ with directory ‘"<<qPrintable(source_file)<<"’";
-                }
-            }
+            qDebug().nospace()<<"mv: failed to move file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
+            return ;
         }
-        else    //改名
-        {
-            QString permission = file_permission(source_name);    //删除为获取所删除的目录的权限
-            //permission 格式为 ‘drwxrwxrwx'
-            if(Global_user=="root")    //owner
-            {
-                if(permission[2] == 'w')
-                    change_name(source_file,dest_file);
-                else
-                    qDebug()<<"Permission denied";
-            }
-            else if(get_uesr_permissions(Global_user))   //获取权限，group
-            {
-                if(permission[5] == 'w')
-                    change_name(source_file,dest_file);
-                else
-                    qDebug()<<"Permission denied";
-            }
-            else    //others
-            {
-                if(permission[8] == 'w')
-                    change_name(source_file,dest_file);
-                else
-                    qDebug()<<"Permission denied";
-            }
 
+        for(int i=0;i<source_file_list.count();i++)
+        {
+            QString source_file = source_file_list[i];
+            QString type1;
+            if(source_file_list.count() == 1)
+            {
+                if(disk.findFile(source_file) == -1)    //判断是否存在
+                {
+                    qDebug().nospace()<<"mv: failed to move file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
+                    return ;
+                }
+
+                type1 = get_file_type(source_file);
+            }
+            else
+                type1 = "directory";
+
+            if(dest_file_id == -1)
+            {
+                QString permission1 = file_permission(source_file);
+                QString permission2 = file_permission(dest_file);
+
+                if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
+                {
+                    if(get_filetime(source_file) < get_filetime(dest_file))
+                        return ;
+                }
+
+                //permission 格式为 ‘drwxrwxrwx'
+                if(Global_user=="root")    //owner
+                {
+                    if(permission1[2] != 'w' || permission2[2] != 'w')
+                    {
+                        qDebug()<<"Permission denied";
+                        return ;
+                    }
+                }
+                else if(get_uesr_permissions(Global_user))   //获取权限，group
+                {
+                    if(permission1[5] != 'w' || permission2[5] != 'w')
+                    {
+                        qDebug()<<"Permission denied";
+                        return ;
+                    }
+                }
+                else    //others
+                {
+                    if(permission1[8] != 'w' || permission2[8] != 'w')
+                    {
+                        qDebug()<<"Permission denied";
+                        return ;
+                    }
+                }
+
+                QString type2 = get_file_type(dest_file);
+
+                if(type1 == "file" && type2 == "file")  //对文件重命名
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    char delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        if(status[0] == 1)  //-b对原文件备份
+                            change_name(dest_file,dest_file+'~');
+                        else
+                            delete_file(dest_file);
+                        change_name(source_file,dest_file);
+                    }
+                }
+                else if(type1 == "file" && type2 == "directory") //将文件移动到目录下
+                {
+                    if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                    {
+                        if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                        char delete_answer = 'y';
+                        if(status[2] != 1)  //-f无需询问
+                        {
+                            qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                            delete_answer = get_delete_answer();
+                        }
+                        if(delete_answer == 'y')
+                        {
+                            if(status[0] == 1)  //-b对原文件备份
+                                change_name(dest_file,dest_file+'~');
+                            else
+                                delete_file(dest_file);
+                            change_name(source_file,dest_file);
+                        }
+                    }
+                    else
+                        move_file_to_Directory(source_file,dest_file);
+                }
+                else if(type1 == "directory" && type2 == "directory")  //将目录移动到目录type2下
+                {
+                    if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
+                    {
+                        if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                        char delete_answer = 'y';
+                        if(status[2] != 1)  //-f无需询问
+                        {
+                            qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file+"/"+source_file)<<"’?";
+                            delete_answer = get_delete_answer();
+                        }
+                        if(delete_answer == 'y')
+                        {
+                            if(status[0] == 1)  //-b对原文件备份
+                                change_name(dest_file,dest_file+'~');
+                            else
+                                delete_file(dest_file);
+                            change_name(source_file,dest_file);
+                        }
+                    }
+                    else
+                        move_file_to_Directory(source_file,dest_file);
+                }
+                else if(type1 == "directory" && type2 == "file")    //error
+                {
+                    if(status[3] == 1)return ;  //-n不执行覆盖操作
+
+                    char delete_answer = 'y';
+                    if(status[2] != 1)  //-f无需询问
+                    {
+                        qDebug().nospace()<<"mv: overwrite ‘"<<qPrintable(dest_file)<<"’?";
+                        delete_answer = get_delete_answer();
+                    }
+                    if(delete_answer == 'y')
+                    {
+                        qDebug().nospace()<<"mv: cannot overwrite non-directory ‘"<<qPrintable(dest_file)<<"’ with directory ‘"<<qPrintable(source_file)<<"’";
+                    }
+                }
+            }
+            else    //改名
+            {
+                QString permission = file_permission(source_name);    //删除为获取所删除的目录的权限
+                //permission 格式为 ‘drwxrwxrwx'
+                if(Global_user=="root")    //owner
+                {
+                    if(permission[2] == 'w')
+                        change_name(source_file,dest_file);
+                    else
+                        qDebug()<<"Permission denied";
+                }
+                else if(get_uesr_permissions(Global_user))   //获取权限，group
+                {
+                    if(permission[5] == 'w')
+                        change_name(source_file,dest_file);
+                    else
+                        qDebug()<<"Permission denied";
+                }
+                else    //others
+                {
+                    if(permission[8] == 'w')
+                        change_name(source_file,dest_file);
+                    else
+                        qDebug()<<"Permission denied";
+                }
+
+            }
         }
     }
 }
@@ -1232,25 +1262,6 @@ void cp(QStringList strList)
     }
     else
     {
-        int file_place = 1;
-        if(strList[1].mid(0,2) == "-p")file_place += 1;
-        if(length <= file_place+1)
-        {
-            qDebug()<<"cp: missing operand";
-            qDebug()<<"Try 'cp --help' for more information.";
-            return ;
-        }
-        QString source_file = strList[file_place];
-        source_file = get_true_path(source_file);
-        QString dest_file = strList[file_place + 1];
-        dest_file = get_true_path(dest_file);
-
-        if(disk.findFile(source_file) == -1)    //判断是否存在
-        {
-            qDebug().nospace()<<"mv: failed to copy file ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
-            return ;
-        }
-
         int status[3]={0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
         for(int i=1;i<strList[1].length();i++)
         {
@@ -1268,80 +1279,112 @@ void cp(QStringList strList)
             }
         }
 
-        if(disk.findFile(dest_file) == -1)
+        int file_place = 1;
+        if(strList[1].mid(0,2) == "-p")file_place += 1;
+        if(length <= file_place+1)
         {
-            if(directory_have_file(source_file,dest_file))  //des下是否有与source同名文件
-            {
-                if(status[0] == 0)
-                {
-                    QString delete_answer = get_delete_answer();
-                    if(delete_answer == 'n')
-                        return ;
-                }
-            }
+            qDebug()<<"cp: missing operand";
+            qDebug()<<"Try 'cp --help' for more information.";
+            return ;
         }
-        else
-        {
-            create_directory(dest_file);
-        }
+        QStringList source_file_list = get_true_path_list(strList[file_place]);
+        QString dest_file = strList[file_place + 1];
+        dest_file = get_true_path(dest_file);
 
-        QString permission1 = file_permission(source_file);
-
-        //获取工作的路径，以判断所拥有的权限
-        QStringList work_path_list = dest_file.split("/");
-        QString work_path;
-        if(work_path_list.count() == 0)
+        if(source_file_list.count() == 0)
         {
-            work_path = "/";
-        }
-        else
-        {
-            work_path_list.removeLast();
-            if(work_path_list.count()==0)
-                work_path = "/";
-            else
-                work_path = work_path_list.join("/");
-        }
-
-        QString permission2 = file_permission(work_path);
-
-        //permission 格式为 ‘drwxrwxrwx'
-        if(Global_user=="root")    //owner
-        {
-            if(permission1[2] != 'w' || permission2[2] != 'w')
-            {
-                qDebug()<<"Permission denied";
-                return ;
-            }
-        }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
-        {
-            if(permission1[5] != 'w' || permission2[5] != 'w')
-            {
-                qDebug()<<"Permission denied";
-                return ;
-            }
-        }
-        else    //others
-        {
-            if(permission1[8] != 'w' || permission2[8] != 'w')
-            {
-                qDebug()<<"Permission denied";
-                return ;
-            }
-        }
-
-        QString type1 = get_file_type(source_file);
-
-        if(type1 == "目录" && status[2] == 0)
-        {
-            qDebug().nospace()<<"cp: omitting directory ‘"<<qPrintable(source_file)<<"’";
+            qDebug().nospace()<<"mv: failed to move file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
             return ;
         }
 
-        int flag_p = 0; //1代表-p：需要复制原文件修改时间和权限  0代表新五文件拥有自己的修改时间和权限
-        if(status[1] == 1)flag_p = 1;
-        copy(source_file,dest_file,flag_p);
+        for(int i=0;i<source_file_list.count();i++)
+        {
+            QString source_file = source_file_list[i];
+            QString type1;
+            if(source_file_list.count() == 1)
+            {
+                if(disk.findFile(source_file) == -1)    //判断是否存在
+                {
+                    qDebug().nospace()<<"mv: failed to move file or directory ‘"<<qPrintable(strList[file_place])<<"’: File not exists";
+                    return ;
+                }
+            }
+
+            if(disk.findFile(dest_file) == -1)
+            {
+                if(directory_have_file(source_file,dest_file))  //des下是否有与source同名文件
+                {
+                    if(status[0] == 0)
+                    {
+                        QString delete_answer = get_delete_answer();
+                        if(delete_answer == 'n')
+                            return ;
+                    }
+                }
+            }
+            else
+            {
+                create_directory(dest_file);
+            }
+
+            QString permission1 = file_permission(source_file);
+
+            //获取工作的路径，以判断所拥有的权限
+            QStringList work_path_list = dest_file.split("/");
+            QString work_path;
+            if(work_path_list.count() == 0)
+            {
+                work_path = "/";
+            }
+            else
+            {
+                work_path_list.removeLast();
+                if(work_path_list.count()==0)
+                    work_path = "/";
+                else
+                    work_path = work_path_list.join("/");
+            }
+
+            QString permission2 = file_permission(work_path);
+
+            //permission 格式为 ‘drwxrwxrwx'
+            if(Global_user=="root")    //owner
+            {
+                if(permission1[2] != 'w' || permission2[2] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else if(get_uesr_permissions(Global_user))   //获取权限，group
+            {
+                if(permission1[5] != 'w' || permission2[5] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+            else    //others
+            {
+                if(permission1[8] != 'w' || permission2[8] != 'w')
+                {
+                    qDebug()<<"Permission denied";
+                    return ;
+                }
+            }
+
+            QString type1 = get_file_type(source_file);
+
+            if(type1 == "目录" && status[2] == 0)
+            {
+                qDebug().nospace()<<"cp: omitting directory ‘"<<qPrintable(source_file)<<"’";
+                return ;
+            }
+
+            int flag_p = 0; //1代表-p：需要复制原文件修改时间和权限  0代表新五文件拥有自己的修改时间和权限
+            if(status[1] == 1)flag_p = 1;
+            copy(source_file,dest_file,flag_p);
+        }
     }
 }
 
