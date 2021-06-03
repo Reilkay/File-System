@@ -1,0 +1,19 @@
+file_permission(source_file)   获取文件权限
+directory_have_file(source_file,dest_file)   判断des下是否有与sou同名文件
+
+get_delete_answer()获取用户输入
+create_file(dest_file)  创建文件
+create_directory(dest_file);  创建目录
+
+get_uesr_permissions(Global_user)获取用户组
+get_file_type(source_file) 获取文件类型
+
+change_file_name(source_file,dest_file);修改文件名
+
+copy(source_file,dest_file,flag_p); 文件sou复制到des下，1代表-p：需要复制原文件修改时间和权限  0代表新五文件拥有自己的修改时间和权限
+
+get_filetime(source_file)获取文件修改时间
+delete_file(dest_file); 删除文件
+move_file_to_Directory(source_file,dest_file); 文件sou移动到des下
+
+if_empty(file_name)文件是否为空
