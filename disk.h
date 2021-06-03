@@ -51,36 +51,51 @@ public:
 
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
 
-    // 根据sfd_id寻找sfd
-    int findSfd(int sfd_id);
-    // 获取文件权限
-    QString getFileAuth(QString path);
-    // 修改文件权限
-    void changeFileAuth(QString path, QString auth);
+    // tool : 根据sfd_id寻找sfd
+    int find_sfd(int sfd_id);
+    // tool : 返回文件当前路径(总vector<sfd>的下标)
+    int get_file_cur_path_index(QString file_path);
+    // tool : 在全是文件夹的时候 返回文件当前路径(总vector<sfd>的下标)
+    int nofilename_get_file_cur_path_index(QString file_path);
+
+
+    //*************************************************************
+    // TODO:在给定dir下查找file
+
 
     // 文件是否为空 为空返回true
-    bool fileIsEmpty(QString file_path);
+    bool file_is_empty(QString file_path);
+    // 将文件移动到指定文件夹
+    void move_file_to_dir(QString source,QString dest);
+    // 全局查找file
+
+    // 获取子文件列表
+    QStringList get_file_list(QString file_path);
+
     // 获取文件类型
-    file_type getFileType(QString file_path);
+    file_type get_file_type(QString file_path);
     // 更改文件名
-    void changeFileName(QString source, QString dest);
+    void change_file_name(QString source,QString dest);
     // 获取文件修改时间
-    time_t getFileChangeTime(QString file_path);
+    time_t get_file_change_time(QString file_path);
+    // 获取文件创建者
+    string get_file_creater(QString file_path);
+    // 获取文件创建时间
+    time_t get_file_create_time(QString file_path);
     // 获取用户密码
-    string getUserPass(string user_name);
+    string get_user_pass(string user_name);
     // 新增用户
-    void addUser(string user_name);
+    void add_user(string user_name);
     // 删除用户
-    void delUser(string user_name);
+    void del_user(string user_name);
     // 获取用户对应的用户组
-    int getUserGroup(string user_name);
-    // 读取指定文件
-    QString readFile(QString path);
-    // 读取指定文件的一行
-    QString readFileByLine(QString path);
-
-
-
+    int get_user_group(string user_name);
+    // 更改用户密码
+    void change_user_pass(string user_name,string pass);
+    // 判断用户是否存在 存在返回true
+    bool user_exist(string user_name);
+    // 获取root密码
+    string get_root_pass();
 
 
 
