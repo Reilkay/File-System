@@ -58,7 +58,28 @@ void USER_TABLE::add_user(USER temp_user)
 
 bool USER_TABLE::del_user(USER temp_user)
 {
+    for(vector<USER>::iterator it = this->user_table.begin();
+        it != this->user_table.begin();
+        it ++)
+    {
+        if(it->getUsername() == temp_user.getUsername())
+        {
+            this->user_table.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
 
+USER USER_TABLE::find_user(string user_name)
+{
+    for(USER i:this->user_table)
+    {
+        if(i.getUsername() == user_name)
+        {
+            return i;
+        }
+    }
 }
 
 
