@@ -116,6 +116,7 @@ bool DISK::saveFile(char *content)
                     for (int it = saved_index_num; it < saved_index_num + tmp_len; it++) {
                         tmp_index.push_back(blocks_index[it]);
                     }
+                    d_block[blocks_index[in]].clearIndex();
                     d_block[blocks_index[in]].setIndex(tmp_index);
                     d_block[blocks_index[in]].setBlock_type(INDEX);
                     saved_index_num += tmp_len;
@@ -132,6 +133,34 @@ bool DISK::saveFile(char *content)
 // TODO
 bool DISK::createNewFile(string path)
 {
+    string dirpath, filename;
+    //划分目录和文件
+    int split_index = path.length() - 1;
+    for (; split_index >= 0; split_index--) {
+        if (path[split_index] == '/') {
+            break;
+        }
+    }
+    dirpath = path.substr(0, split_index);
+    filename = path.substr(split_index + 1, path.length());
+    int tmp_inode_id = findFile(dirpath);
+    if (tmp_inode_id < 0) {
+        // 文件目录不存在
+        return false;
+    }
+    BFD_ITEM_DISK tmp_bfd_item = d_inodes.findInodeByNum(tmp_inode_id);
+    // 检查重名问题
+    if (all_sfd[tmp_bfd_item.getDinode_ID()].findSfd_item(filename) != -1) {
+        // 有同名文件
+        return false;
+    }
+    // 检测是否有空闲i节点
+    BFD_ITEM_DISK tmp_dinode;
+    int inode_id = d_inodes.getFreeInode();
+    if (inode_id < 0) {
+        // i节点用尽
+        return false;
+    }
 }
 
 bool DISK::delFile(QString file_path)
