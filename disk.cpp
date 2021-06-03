@@ -200,13 +200,13 @@ int DISK::findFile(QString file_path)
     int total_layer = this->all_sfd.size();
     int cur_layer = 0;
     // 防止超出系统层数
-    while (layer++ && layer <= layer_max) {
+    while (layer < layer_max) {
         // 重要的是 更新cur_layer
         // 从all_SFD中遍历搜索
         for (SFD_ITEM i : this->all_sfd[cur_layer].getSFD_list()) {
             if (i.getFile_name() == split_path[layer].toStdString()) {
                 // 如果找到 且当前是最后一级目录 就返回id
-                if (layer == layer_max) {
+                if (layer == layer_max-1) {
                     return i.getID();
                 }
                 // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
@@ -216,11 +216,13 @@ int DISK::findFile(QString file_path)
                 }
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
                 else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
-                    cur_layer = this->find_sfd_index_in_total_sfd(all_sfd[cur_layer]);
+                    cur_layer = this->find_sfd_index_in_total_sfd(
+                                this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
+                                );
                 }
-                continue;
             }
         }
+        layer++;
     }
     return -1;
 }
@@ -296,18 +298,35 @@ void DISK::delFile(QString file_path)
     int total_layer = this->all_sfd.size();
     int cur_layer = 0;
     // 防止超出系统层数
-    while (layer++ && layer <= layer_max) {
+    while (layer < layer_max) {
         // 重要的是 更新cur_layer
         // 从all_SFD中遍历搜索
-        for (vector<SFD_ITEM>::iterator i = this->all_sfd[cur_layer].getSFD_list().begin();
-             i != this->all_sfd[cur_layer].getSFD_list().end();
-             i++) {
-            if (layer == layer_max && i->getFile_name() == split_path[layer].toStdString()) {
-                this->all_sfd[cur_layer].getSFD_list().erase(i);
-                break;
+        for (SFD_ITEM i : this->all_sfd[cur_layer].getSFD_list()) {
+            if (i.getFile_name() == split_path[layer].toStdString()) {
+                // 如果找到 且当前是最后一级目录 就返回id
+                if (layer == layer_max-1) {
+                    break;
+                }
+                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                    cur_layer = this->find_sfd_index_in_total_sfd(
+                                this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
+                                );
+                }
             }
         }
+        layer++;
     }
+    for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
+         it != this->all_sfd[cur_layer].getSFD_list().end();
+         it++)
+    {
+        if(it->getID() == inode_id)
+        {
+            this->all_sfd[cur_layer].getSFD_list().erase(it);
+        }
+    }
+
+
     //    int dir_dfs_layer_begin = split_path.size();
     //    // 找到这个文件的inode的id
     //    int inode_id = this->findFile(file_path);

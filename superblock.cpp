@@ -93,13 +93,13 @@ bool SUPER_BLOCK::add_disk_free_block(vector<int> free_disk_numbers)
 {
     if(this->next_super_block->total_free_block_num+free_disk_numbers.size() >= DATABLOCKNUM)
         return false;
-    static SUPER_BLOCK* tail = this->next_super_block;
+    SUPER_BLOCK* tail = this->next_super_block;
     for(auto i:free_disk_numbers)
     {
        // 满了就再创建一个super-block
        if(this->next_super_block->super_block_size >= 50)
        {
-           static SUPER_BLOCK* new_super_block = new SUPER_BLOCK();
+           SUPER_BLOCK* new_super_block = new SUPER_BLOCK();
            new_super_block->next_super_block = tail;
            // 替换全部参数---------------------------------------------
            new_super_block->super_block_num = this->next_super_block->super_block_num+1;
