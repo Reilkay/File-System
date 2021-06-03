@@ -157,11 +157,11 @@ int DISK::findFile(QString file_path)
                 }
                 // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
                 // 不是最后一级目录 却找到了文件 直接返回-1
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() != directory) {
+                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() != DIRECTORY) {
                     return -1;
                 }
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == directory) {
+                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->find_sfd_index_in_total_sfd(all_sfd[cur_layer]);
                 }
                 continue;
