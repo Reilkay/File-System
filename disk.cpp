@@ -165,7 +165,7 @@ bool DISK::createNewDirectory(string path, unsigned int master_ID)
         return false;
     }
     // 创建新SFD
-    SFD new_SFD;
+    SFD new_SFD = SFD();
     int new_SFD_id = all_sfd.back().getSFD_ID() + 1;
     new_SFD.setSFD_ID(new_SFD_id);
     all_sfd.push_back(new_SFD);
