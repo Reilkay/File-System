@@ -69,7 +69,7 @@ QString get_true_path(QString str)
             QStringList temp_path_list = new_path.split('/',QString::SkipEmptyParts);
             if(temp_path_list.count() == 0)
             {
-                new_path = "/"
+                new_path = "/";
             }
             else
             {
@@ -396,7 +396,7 @@ void cd(QStringList strList)
 {
     if(strList.count() == 1)
     {
-        Global_path = "/" + Global_Global_user;
+        Global_path = "/" + Global_user;
         return ;
     }
     QString filename=strList[1];
@@ -522,7 +522,8 @@ void mkdir(QStringList strList)
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(work_path);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[1] == 'r')
                 create_directory(file_name);
@@ -618,7 +619,7 @@ void rmdir(QStringList strList)
             return ;
         }
 
-        if(file_type(file_name) != "directory")
+        if(get_file_type(file_name) != "directory")
         {
             qDebug().nospace()<<"rmdir: failed to remove ‘"<<qPrintable(strList[file_place])<<"’: Not a directory";
             return ;
@@ -650,7 +651,8 @@ void rmdir(QStringList strList)
 
             QString permission = file_permission(file_name);    //删除为获取所删除的目录的权限
             //permission 格式为 ‘drwxrwxrwx'
-            if(Global_user=="root")    //owner
+            QString creator = get_creator(file_name);
+            if(Global_user == "root" || Global_user == creator)    //owner
             {
                 if(permission[2] == 'w')
                     delete_file(file_name);
@@ -686,7 +688,7 @@ void rm_del(QString filename,int ask)
         QStringList file_list = get_file_list(filename);
         for(int i=0;i<file_list.count();i++)
         {
-            if(file_type(file_list[i]) == "文件目录")
+            if(get_file_type(file_list[i]) == "文件目录")
                 rm_del(file_list[i],ask);
             else
             {
@@ -702,7 +704,8 @@ void rm_del(QString filename,int ask)
 
                     QString permission = file_permission(file_list[i]);
                     //permission 格式为 ‘drwxrwxrwx'
-                    if(Global_user=="root")    //owner
+                    QString creator = get_creator(file_list[i]);
+                    if(Global_user == "root" || Global_user == creator)    //owner
                     {
                         if(permission[2] == 'w')
                             delete_file(file_list[i]);
@@ -742,7 +745,8 @@ void rm_del(QString filename,int ask)
 
         QString permission = file_permission(filename);
         //permission 格式为 ‘drwxrwxrwx'
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(filename);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[2] == 'w')
                 delete_file(filename);
@@ -890,7 +894,7 @@ void rm(QStringList strList)
                 return ;
             }
 
-            if(file_type(file_name) != "文件")    // 文件目录需以'-r'命令删除
+            if(get_file_type(file_name) != "文件")    // 文件目录需以'-r'命令删除
             {
                 qDebug().nospace()<<"rm: remove regular file ‘"<<file_name<<"’?";
                 QString delete_answer = get_delete_answer();    //获取用户输入
@@ -898,7 +902,8 @@ void rm(QStringList strList)
                 {
                     QString permission = file_permission(file_name);
                     //permission 格式为 ‘drwxrwxrwx'
-                    if(Global_user=="root")    //owner
+                    QString creator = get_creator(file_name);
+                    if(Global_user == "root" || Global_user == creator)    //owner
                     {
                         if(permission[2] == 'w')
                             delete_file(file_name);
@@ -1099,7 +1104,9 @@ void mv(QStringList strList)
                 }
 
                 //permission 格式为 ‘drwxrwxrwx'
-                if(Global_user=="root")    //owner
+                QString creator1 = get_creator(source_file);
+                QString creator2 = get_creator(dest_file);
+                if(Global_user == "root" || (Global_user == creator1 && Global_user == creator2))    //owner
                 {
                     if(permission1[2] != 'w' || permission2[2] != 'w')
                     {
@@ -1211,9 +1218,10 @@ void mv(QStringList strList)
             }
             else    //改名
             {
-                QString permission = file_permission(source_name);    //删除为获取所删除的目录的权限
+                QString permission = file_permission(source_file);    //删除为获取所删除的目录的权限
                 //permission 格式为 ‘drwxrwxrwx'
-                if(Global_user=="root")    //owner
+                QString creator = get_creator(source_file);
+                if(Global_user == "root" || Global_user == creator)    //owner
                 {
                     if(permission[2] == 'w')
                         change_name(source_file,dest_file);
@@ -1447,7 +1455,8 @@ void cp(QStringList strList)
             QString permission2 = file_permission(work_path);
 
             //permission 格式为 ‘drwxrwxrwx'
-            if(Global_user=="root")    //owner
+            QString creator = get_creator(work_path);
+            if(Global_user == "root" || Global_user == creator)    //owner
             {
                 if(permission1[2] != 'w' || permission2[2] != 'w')
                 {
@@ -1515,7 +1524,8 @@ void cat(QStringList strList)
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(file_name);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[1] != 'r')
             {
@@ -1632,6 +1642,72 @@ void find(QStringList strList)
     }
 }
 
+void add_permission(QString filename,int mum[3],QString p)
+{
+    QString n_p = get_permission(filename);
+    for(int i=0;i<3;i++)
+    {
+        if(mum[i] != 0)
+        {
+            if(p.indexOf('r') != -1)
+                n_p[i*3 + 1] = 'r';
+            if(p.indexOf('w') != -1)
+                n_p[i*3 + 2] = 'w';
+            if(p.indexOf('x') != -1)
+                n_p[i*3 + 3] = 'x';
+        }
+    }
+    change_permission(filename,n_p);
+}
+
+void sub_permission(QString filename,int mum[3],QString p)
+{
+    QString n_p = get_permission(filename);
+    for(int i=0;i<3;i++)
+    {
+        if(mum[i] != 0)
+        {
+            if(p.indexOf('r') != -1)
+                n_p[i*3 + 1] = 'r';
+            if(p.indexOf('w') != -1)
+                n_p[i*3 + 2] = 'w';
+            if(p.indexOf('x') != -1)
+                n_p[i*3 + 3] = 'x';
+        }
+    }
+    change_permission(filename,n_p);
+}
+
+void update_permission(QString filename,int mum[3],QString p)
+{
+    QString n_p = "";
+    if(get_file_type(filename) == "directory")
+        n_p = n_p + "d";
+    else
+        n_p = n_p + "-";
+    for(int i=0;i<3;i++)
+    {
+        if(mum[i] == 0)
+            n_p += "---";
+        else
+        {
+            if(p.indexOf('r') == -1)
+                n_p += "-";
+            else
+                n_p += 'r';
+            if(p.indexOf('w') == -1)
+                n_p += "-";
+            else
+                n_p += 'w';
+            if(p.indexOf('x') == -1)
+                n_p += "-";
+            else
+                n_p += 'x';
+        }
+    }
+    change_permission(filename,n_p);
+}
+
 /*
  * NAME
  *      A command that controls the user's permissions on a file
@@ -1721,14 +1797,20 @@ void chmod(QStringList strList)
 
             for(int i=0;i<3;i++)
             {
-                if(new_permission[i] == -1) break;
                 QString n_p="";
                 if((new_permission[i] & 4) != 0) n_p += "r";
+                else n_p += "-";
                 if((new_permission[i] & 2) != 0) n_p += "w";
+                else n_p += "-";
                 if((new_permission[i] & 1) != 0) n_p += "x";
+                else n_p += "-";
 
                 for(int j=0;j<file_num;j++)
                 {
+                    if(get_file_type(file_name[j]) == "directory")
+                        n_p = "d" + n_p;
+                    else
+                        n_p = "-" + n_p;
                     change_permission(file_name[j],n_p);
                 }
             }
@@ -1811,28 +1893,16 @@ void chmod(QStringList strList)
                         return ;
                     }
 
-                    for(int i=0;i<3;i++)
-                    {
-                        if(mumber[i] == 1)
-                        {
-                            if(flag_add_sub == 0)
-                                for(int j=0;j<file_num;j++)
-                                {
-                                    add_permission(file_name[j],n_p);
-                                }
-                            else if(flag_add_sub == 1)
-                                for(int j=0;j<file_num;j++)
-                                {
-                                    sub_permission(file_name[j],n_p);
-                                }
-                            else if(flag_add_sub == 2)
-                                for(int j=0;j<file_num;j++)
-                                {
-                                    change_permission(file_name[j],n_p);
-                                }
-                        }
-                    }
 
+                    if(flag_add_sub == 0)
+                        for(int j=0;j<file_num;j++)
+                            add_permission(file_name[j],mumber,n_p);
+                    else if(flag_add_sub == 1)
+                        for(int j=0;j<file_num;j++)
+                            sub_permission(file_name[j],mumber,n_p);
+                    else if(flag_add_sub == 2)
+                        for(int j=0;j<file_num;j++)
+                            update_permission(file_name[j],mumber,n_p);
                 }
             }
         }
@@ -1877,7 +1947,7 @@ void login(QStringList strList)
         return ;
     }
     QString user_name = strList[1];
-    if(ues_list.indexOf(user_name) == -1)
+    if(ues_exist(user_name) == -1)
     {
         qDebug().nospace()<<"login: failed to login '"<<qPrintable(user_name)<<"': user not exists.";
         return ;
@@ -2083,28 +2153,29 @@ void touch(QStringList strList)
                 work_path = work_path_list.join("/");
         }
 
-        QString permission = file_permission("work_path");
+        QString permission = file_permission(work_path);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(work_path);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[1] == 'r')
-                create_file(file_name);
+                create_file(filename);
             else
                 qDebug()<<"Permission denied";
         }
         else if(get_uesr_permissions(Global_user))   //获取权限，group
         {
             if(permission[4] == 'r')
-                create_file(file_name);
+                create_file(filename);
             else
                 qDebug()<<"Permission denied";
         }
         else    //others
         {
             if(permission[7] == 'r')
-                create_file(file_name);
+                create_file(filename);
             else
                 qDebug()<<"Permission denied";
         }
@@ -2151,7 +2222,8 @@ void read(QStringList strList)
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(file_name);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[1] != 'r')
             {
@@ -2211,7 +2283,8 @@ void write(QStringList strList)
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        if(Global_user=="root")    //owner
+        QString creator = get_creator(file_name);
+        if(Global_user == "root" || Global_user == creator)    //owner
         {
             if(permission[2] != 'w')
             {
@@ -2769,7 +2842,7 @@ void clear()
  * SYNOPSIS
  *      [sudo] format
  */
-void format(QString Global_user)
+void format()
 {
     if(Global_user == "root")
         disk.Init();
@@ -2780,7 +2853,7 @@ void format(QString Global_user)
 /*
  * Judgment instruction function
  */
-void choose(QString str, QString Global_user)
+void choose(QString str)
 {
     QStringList strList = str.split(" ");
     if (strList[0] == "ls")
@@ -2832,14 +2905,15 @@ void choose(QString str, QString Global_user)
     else if (strList[0] == "clear")
         clear();
     else if (strList[0] == "format")
-        format(Global_user);
+        format();
     else if (strList[0] == "sudo")
     {
         QString psword = get_root_password();
         if(psword == "root")
         {
             str = str.mid(5);
-            choose(str, "root");
+            Global_user = "root";
+            choose(str);
         }
         else
             qDebug()<<"password error";
