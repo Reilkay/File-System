@@ -167,7 +167,7 @@ bool DISK::createNewDirectory(string path, unsigned int master_ID)
             break;
         }
     }
-    dirpath = path.substr(0, split_index);
+    dirpath = path.substr(0, split_index + 1);
     directoryname = path.substr(split_index + 1, path.length());
     int dir_inode_id = findFile(QString::fromStdString(dirpath));
     if (dir_inode_id < 0) {
@@ -273,7 +273,6 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
     }
     dirpath = path.substr(0, split_index + 1);
     filename = path.substr(split_index + 1, path.length());
-    qDebug() << "1";
     int dir_inode_id = findFile(QString::fromStdString(dirpath));
     if (dir_inode_id < 0) {
         // 文件目录不存在
@@ -291,7 +290,6 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
         // i节点用尽
         return false;
     }
-    qDebug() << "2";
     vector<char> auth = {'7', '5', '5'};
     time_t tmp_time;
     time(&tmp_time);                        //当前time_t类型UTC时间

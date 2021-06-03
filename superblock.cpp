@@ -28,9 +28,7 @@ void SUPER_BLOCK::Init()
     // 类似头插法
     SUPER_BLOCK* tail = nullptr;
     // cur_size用于记录当前的分配块号
-    qDebug() << "loops start";
     while(cur_size < DATABLOCKNUM) {
-        qDebug() << cur_size;
         // 在new的时候 就已经vector-resize-50 next=null了
         SUPER_BLOCK* temp_super_block = new SUPER_BLOCK();
         temp_super_block->setSuper_block_num(super_block_num_flag++);
@@ -52,7 +50,6 @@ void SUPER_BLOCK::Init()
         }
         tail = temp_super_block;
     }
-    qDebug() << "loops end";
     this->setNext_super_block(tail);
     this->next_super_block->setTotal_free_block_num(cur_size);
 }
