@@ -137,12 +137,17 @@ QStringList get_true_path_list(QString str)
  * NAME
  *      ls - Displays the contents of the specified working directory
  * SYNOPSIS
- *      ls [-alrtAFR] [name...]
+ *      ls [-alrtAR] [name...]
  */
 void ls(QStringList strList)
 {
     int length = strList.count();
-    if(length > 1 && strList[1] == "--help")
+    if(length == 1)
+    {
+        qDebug()<<"ls: missing operand";
+        qDebug()<<"Try 'ls --help' for more information.";
+    }
+    else if(strList[1] == "--help")
     {
         qDebug()<<"Usage: ls [OPTION]... [FILE]...";
         qDebug()<<"List information about the FILEs (the current directory by default).";
@@ -267,34 +272,48 @@ void ls(QStringList strList)
         qDebug()<<"GNU coreutils online help: <http://www.gnu.org/software/coreutils/>";
         qDebug()<<"For complete documentation, run: info coreutils 'ls invocation'";
     }
+    else if(strList[1].length() > 1 && strList[1][0] == '-' && (strList[1][1] != 'a'|| strList[1][1] != 'l'|| strList[1][1] != 'r'|| strList[1][1] != 't'|| strList[1][1] != 'A'|| strList[1][1] != 'R'))
+    {
+        if(strList[1].length() == 2 && strList[1][1] == '-')
+        {
+            qDebug()<<"ls: missing operand";
+            qDebug()<<"Try 'ls --help' for more information.";
+        }
+        else if(strList[1].length() == 2)
+        {
+            qDebug().nospace()<<"ls: invalid option -- '"<<strList[1][1]<<"'";
+            qDebug()<<"Try 'ls --help' for more information.";
+        }
+        else
+        {
+            qDebug().nospace()<<"ls: unrecognized option -- '"<<qPrintable(strList[1])<<"'";
+            qDebug()<<"Try 'ls --help' for more information.";
+        }
+    }
     else
     {
-//        file_node* fi;
-//        if(length == 1)
-//            fi=get_fi("当前路径");
-//        else if(strList[1][0] != '-')
-//            fi=get_fi(strList[1]);
-
-//        if(fi=nullptr)
-//        {
-//            qDebug().nospace()<<"ls: cannot access "<<qPrintable(strList[1])<<": No such file or directory";
-//            return ;
-//        }
-
-//        QStringList ansList;
-//        QStringList functionList = strList[1].split("",QString::SkipEmptyParts);
-
-//        if(functionList.indexOf("a") != -1)
-//            ansList<<"."<<"..";
-//        if(functionList.indexOf("a") != -1 || functionList.indexOf("A") != -1)
-//        {
-//            while(fi!=nullptr)
-//            {
-//                ansList<<fi->getname();
-//                fi=fi->next;
-//            }
-//        }
-//        else
+        int status[6]={0,0,0,0,0,0};    //命令行的附加功能格式为“组合”+“存在”形式  以附加功能数组进行对应功能存储
+        for(int i=1;i<strList[1].length();i++)
+        {
+            if(strList[1][i] == 'a')    //+父+本身+隐藏
+                status[0] = 1;
+            else if(strList[1][i] == 'l')   //详细信息
+                status[1] = 1;
+            else if(strList[1][i] == 'r')   //反序
+                status[2] = 1;
+            else if(strList[1][i] == 't')   //时间先后
+                status[3] = 1;
+            else if(strList[1][i] == 'A')   //+隐藏
+                status[4] = 1;
+            else if(strList[1][i] == 'R')   //目录下文件
+                status[5] = 1;
+            else    //命令行会对第一个遇到的非附加功能符号进行报错
+            {
+                qDebug().nospace()<<"rm: invalid option -- '"<<strList[1][i]<<"'";
+                qDebug()<<"Try 'rm --help' for more information.";
+                return ;
+            }
+        }
     }
 }
 
@@ -2737,7 +2756,7 @@ void choose(QString str, QString Global_user)
         format(Global_user);
     else if (strList[0] == "sudo")
     {
-        QString psword = get_password();
+        QString psword = get_root_password();
         if(psword == "root")
         {
             str = str.mid(5);
