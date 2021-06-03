@@ -50,6 +50,8 @@ public:
     void Dfs_del_dir(int cur_layer, int max_layer);
 
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
+    // 根据sfd_id寻找sfd
+    int find_sfd(int sfd_id);
 
 private:
     // 成组链接的首个超级块

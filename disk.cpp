@@ -414,3 +414,13 @@ int DISK::find_sfd_index_in_total_sfd(SFD temp_sfd)
     }
     return -1;
 }
+
+int DISK::find_sfd(int sfd_id)
+{
+    for(unsigned int i = 0; i < all_sfd.size(); i++) {
+        if(all_sfd[i].getSFD_ID() == sfd_id) {
+            return i;
+        }
+    }
+    return -1;
+}
