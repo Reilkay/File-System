@@ -568,6 +568,21 @@ int DISK::get_user_group(string user_name)
     }
 }
 
+void DISK::chang_user_pass(string user_name, string pass)
+{
+    for(vector<USER>::iterator it = this->user_table.getUser_table().begin();
+        it != this->user_table.getUser_table().end();
+        it++)
+    {
+        if(it->getUsername() == user_name)
+        {
+            it->setUserpwd(pass);
+            return;
+        }
+    }
+    return;
+}
+
 USER_TABLE DISK::getUser_table() const
 {
     return user_table;
