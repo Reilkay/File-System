@@ -117,7 +117,7 @@ QStringList get_true_path_list(QString str)
             QStringList file_list;
             if(disk.findFile(new_path) == -1)
                 return file_list;
-            file_list = get_file_list(new_path);
+            file_list = disk.getFileList(new_path);
             for(int j=0;j<file_list.count();j++)
             {
                 new_path_list<<file_list[j];
@@ -322,7 +322,7 @@ void ls(QStringList strList)
             }
         }
 
-        QStringList file_list = get_file_list(file_name);
+        QStringList file_list = disk.getFileList(file_name);
         QStringList ans_list;
         QString ans1 = "";
         QString ans2 = "";
@@ -345,7 +345,7 @@ void ls(QStringList strList)
             if(status[2] == 1)
             {
                 if(work_path != Global_path)
-                    ans1 = ans1 + get_permission(work_path) + QString(get_file_list(work_path).count()) + get_creator(work_path) + Global_user + get_filetime(work_path) +"..";
+                    ans1 = ans1 + disk.get(work_path) + QString(get_file_list(work_path).count()) + get_creator(work_path) + Global_user + get_filetime(work_path) +"..";
                 ans2 = ans2 + get_permission(Global_path) + QString(get_file_list(Global_path).count()) + get_creator(Global_path) + Global_user + get_filetime(Global_path) +".";
             }
             else
