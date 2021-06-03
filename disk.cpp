@@ -37,6 +37,9 @@ void DISK::Init()
                              tmp_time,      // 文件创建时间
                              tmp_time);
     d_inodes.addInode(root_dinode);
+    for (int i =0;i<DATABLOCKNUM;i++) {
+        d_block.push_back(DISK_BLOCK(i,false));
+    }
 }
 
 void DISK::setSuper_block(const SUPER_BLOCK &value)
