@@ -52,6 +52,10 @@ public:
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
     // 根据sfd_id寻找sfd
     int find_sfd(int sfd_id);
+    // 获取文件权限
+    QString getFileAuth(QString path);
+    // 修改文件权限
+    void changeFileAuth(QString path, QString auth);
 
 private:
     // 成组链接的首个超级块

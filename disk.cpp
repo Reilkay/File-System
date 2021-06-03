@@ -206,7 +206,7 @@ int DISK::findFile(QString file_path)
         for (SFD_ITEM i : this->all_sfd[cur_layer].getSFD_list()) {
             if (i.getFile_name() == split_path[layer].toStdString()) {
                 // 如果找到 且当前是最后一级目录 就返回id
-                if (layer == layer_max-1) {
+                if (layer == layer_max - 1) {
                     return i.getID();
                 }
                 // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
@@ -217,7 +217,7 @@ int DISK::findFile(QString file_path)
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
                 else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->find_sfd_index_in_total_sfd(
-                                this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
+                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
                                 );
                 }
             }
@@ -304,12 +304,11 @@ void DISK::delFile(QString file_path)
         for (SFD_ITEM i : this->all_sfd[cur_layer].getSFD_list()) {
             if (i.getFile_name() == split_path[layer].toStdString()) {
                 // 如果找到 且当前是最后一级目录 就返回id
-                if (layer == layer_max-1) {
+                if (layer == layer_max - 1) {
                     break;
-                }
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                } else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->find_sfd_index_in_total_sfd(
-                                this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
+                                    this->all_sfd[this->find_sfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]
                                 );
                 }
             }
@@ -318,15 +317,11 @@ void DISK::delFile(QString file_path)
     }
     for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
          it != this->all_sfd[cur_layer].getSFD_list().end();
-         it++)
-    {
-        if(it->getID() == inode_id)
-        {
+         it++) {
+        if(it->getID() == inode_id) {
             this->all_sfd[cur_layer].getSFD_list().erase(it);
         }
     }
-
-
     //    int dir_dfs_layer_begin = split_path.size();
     //    // 找到这个文件的inode的id
     //    int inode_id = this->findFile(file_path);
@@ -442,4 +437,53 @@ int DISK::find_sfd(int sfd_id)
         }
     }
     return -1;
+}
+
+QString DISK::getFileAuth(QString path)
+{
+    QString resu;
+    // TODO: 获取文件类别
+    for(int i = 0; i < 3; i++) {
+        int tmp_auth = d_inodes.findInodeByNum(findFile(path)).getAuth()[i] - '0';
+        switch(tmp_auth) {
+            case 1:
+                resu += "--x";
+                break;
+            case 2:
+                resu += "-w-";
+                break;
+            case 3:
+                resu += "-wx";
+                break;
+            case 4:
+                resu += "r--";
+                break;
+            case 5:
+                resu += "r-x";
+                break;
+            case 6:
+                resu += "rw-";
+                break;
+            case 7:
+                resu += "rwx";
+                break;
+        }
+    }
+    return resu;
+}
+
+void DISK::changeFileAuth(QString path, QString auth)
+{
+    vector<char> tmp_auth;
+    QString auth2num[] = {"--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"};
+    for(int i = 0; i < 3; i++) {
+        int j;
+        for(j = 0; j < auth2num->length(); j++) {
+            if(auth2num[j] == auth.mid(i * 3, 3)) {
+                break;
+            }
+        }
+        tmp_auth[i] = j + '0';
+    }
+    d_inodes.findInodeByNum(findFile(path)).setAuth(tmp_auth);
 }
