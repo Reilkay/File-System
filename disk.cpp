@@ -476,6 +476,26 @@ void DISK::changeFileAuth(QString path, QString auth)
     tmp.setAuth(tmp_auth);
     d_inodes.changeInodeByNum(findFile(path), tmp);
 }
+
+void DISK::copy_file(QString source, QString dest, int flag)
+{
+    int file_layer = getFileCurPathIndex(source);
+    int dir_layer = nofilenameGetFileCurPathIndex(dest);
+    QStringList split_path1 = source.split("/");
+    string old_file_name = split_path1.back().toStdString();
+    dest = dest + QString::fromStdString(old_file_name);
+    string string_source = source.toStdString();
+    string string_dest = dest.toStdString();
+
+    // 寻找旧文件 源文件
+    BFD_ITEM_DISK temp_bfd_item = d_inodes.findInodeByNum(findFile(source));
+    createNewFile(string_dest,temp_bfd_item.getMaster_ID());
+    BFD_ITEM_DISK new_bfd_item = d_inodes.findInodeByNum(findFile(dest));
+    string tmp = readFile(dest).toStdString();
+    const char* ch = tmp.c_str();
+    saveFile(new_bfd_item.getDinode_ID(),const_cast<char*>(ch));
+}
+
 int DISK::getFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/");
@@ -627,6 +647,16 @@ time_t DISK::getFileCreateTime(QString file_path)
 string DISK::getUserPass(string user_name)
 {
     return this->user_table.find_user(user_name).getUserpwd();
+}
+
+int DISK::getUserIdByUsenName(string user_name)
+{
+    for(USER user : this->user_table.getUser_table())
+    {
+        if(user.getUsername() == user_name)
+            return user.getId();
+    }
+    return -1;
 }
 
 void DISK::addUser(string user_name)
