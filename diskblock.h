@@ -31,6 +31,7 @@ public:
     vector<int> getIndex() const;
     void setIndex(const vector<int> &value);
     void addIndex(int value);
+    void clearIndex();
 
     int getIndex_num() const;
 

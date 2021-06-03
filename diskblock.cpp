@@ -60,6 +60,12 @@ void DISK_BLOCK::addIndex(int value)
     this->index_num++;
 }
 
+void DISK_BLOCK::clearIndex()
+{
+    this->index.clear();
+    this->index_num = 0;
+}
+
 int DISK_BLOCK::getIndex_num() const
 {
     return this->index_num;
