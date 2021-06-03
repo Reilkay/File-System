@@ -2,9 +2,10 @@
 #define USER_H
 
 #include <string>
+#include <vector>
 using namespace std;
 
-// 用户表USER
+// 用户USER
 class USER
 {
 public:
@@ -29,6 +30,15 @@ private:
     string userpwd;
     int usergrp;        //用户组
     bool isManager;     //管理员
+};
+
+//用户表USER_TABLE
+class USER_TABLE
+{
+public:
+
+private:
+    vector<string> username_table;
 };
 
 #endif // USER_H

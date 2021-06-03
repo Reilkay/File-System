@@ -32,6 +32,7 @@ public:
     USER getUser_table() const;
     void setUser_table(const USER &value);
 
+    bool createNewFile(string path);
     bool saveFile(char* content);
 
     // TODO:做多文件
