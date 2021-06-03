@@ -3,12 +3,15 @@
 
 #include <string>
 #include <vector>
+
+#include "configure.h"
+
 using namespace std;
 
 enum file_type {
-    directory,
-    common,
-    special
+    DIRECTORY,
+    COMMON,
+    SPECIAL
 };
 
 class BFD_ITEM_DISK
@@ -70,7 +73,8 @@ class BFD_DISK
 {
 private:
     vector<BFD_ITEM_DISK> BFD_DISK_list;
-
+    bool freeInodeList[DINODEBLK * BLOCKSIZE / DINODESIZE];
+    int freeInodeNum;
 public:
     BFD_DISK();
     // 根据sfd给的索引结号寻找到相应的inode信息
@@ -80,6 +84,7 @@ public:
     bool delInode(BFD_ITEM_DISK item);
     vector<BFD_ITEM_DISK> getBFD_DISK_list() const;
     void setBFD_DISK_list(const vector<BFD_ITEM_DISK> &value);
+    int getFreeInodeNum() const;
 };
 
 #endif // DINODE_H

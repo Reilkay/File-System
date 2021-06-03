@@ -36,9 +36,15 @@ private:
 class USER_TABLE
 {
 public:
+    USER_TABLE(){}
+    void add_user(USER temp_user);
+    bool del_user(USER temp_user);
+
+    vector<USER> getUser_table() const;
+    void setUser_table(const vector<USER> &value);
 
 private:
-    vector<string> username_table;
+    vector<USER> user_table;
 };
 
 #endif // USER_H

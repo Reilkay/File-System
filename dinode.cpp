@@ -124,9 +124,18 @@ void BFD_DISK::setBFD_DISK_list(const vector<BFD_ITEM_DISK> &value)
     BFD_DISK_list = value;
 }
 
+int BFD_DISK::getFreeInodeNum() const
+{
+    return freeInodeNum;
+}
+
 BFD_DISK::BFD_DISK()
 {
     this->BFD_DISK_list.resize(DINODEBLK * BLOCKSIZE / DINODESIZE);
+    this->freeInodeNum = DINODEBLK * BLOCKSIZE / DINODESIZE;
+    for(int i = 0; i < DINODEBLK * BLOCKSIZE / DINODESIZE; i++) {
+        this->freeInodeList[i] = true;
+    }
 }
 
 BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
@@ -145,13 +154,25 @@ BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
 // TODO: get空闲InodeID
 int BFD_DISK::getFreeInode()
 {
-    if(this->BFD_DISK_list.size() >= )
+    if(freeInodeNum <= 0) {
+        return -1;
+    } else {
+        int id = -1;
+        for(int i = 0; i < DINODEBLK * BLOCKSIZE / DINODESIZE; i++) {
+            if(freeInodeList[i] == true) {
+                id = i;
+                break;
+            }
+        }
+        return id;
     }
 }
 
 bool BFD_DISK::addInode(BFD_ITEM_DISK item)
 {
     this->BFD_DISK_list.push_back(item);
+    freeInodeNum--;
+    freeInodeList[item.getDinode_ID()] = false;
     return true;
 }
 
@@ -162,6 +183,8 @@ bool BFD_DISK::delInode(BFD_ITEM_DISK item)
         it ++) {
         if(item.getDinode_ID() == it->getDinode_ID()) {
             this->BFD_DISK_list.erase(it);
+            freeInodeList[item.getDinode_ID()] = true;
+            freeInodeNum++;
             return true;
         }
     }

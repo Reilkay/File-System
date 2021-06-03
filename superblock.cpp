@@ -19,44 +19,45 @@ void SUPER_BLOCK::Init()
     int per_disk_block_size = BLOCKSIZE;
     // 数据块数目
     int data_block_num = DATABLOCKNUM;
-    while(data_block_num --)
+
+    // 每组有50个空节点
+    int stack_data_block_size = SUPERFREEBLOCK;
+    int cur_size = 0;
+    // 或许可以用到超级块序号??? 先写上
+    int super_block_num_flag = 0;
+    // 类似头插法
+    SUPER_BLOCK* tail = nullptr;
+    // cur_size用于记录当前的分配块号
+
+    while(cur_size < DATABLOCKNUM)
     {
-        // 每组有50个空节点
-        int stack_data_block_size = DATABLOCKNUM;
-        int cur_size = 0;
-        // 或许可以用到超级块序号??? 先写上
-        int super_block_num_flag = 0;
-        // 类似头插法
-        static SUPER_BLOCK* tail = nullptr;
-        while(cur_size <= stack_data_block_size)
-        {
-           // 在new的时候 就已经vector-resize-50 next=null了
-           static SUPER_BLOCK* temp_super_block = new SUPER_BLOCK();
-           temp_super_block->setSuper_block_num(super_block_num_flag++);
-           // 说明尾巴已经生成
-           if(tail != nullptr)
-           {
-             temp_super_block->setNext_super_block(tail);
-           }
-           // 初始块的next本来就是null
-           for(int j=0;
-               cur_size<=stack_data_block_size &&
-               j<temp_super_block->getSuper_block_size();
-               j++)
-           {
-              // 因为0号不存东西 所以不设置组长块
-              if(j == 0 && cur_size != 0)
-              {
-                  temp_super_block->setAdmin_num(cur_size);
-              }
-              temp_super_block->disk_num_list[(unsigned long long)j] = cur_size++;
-              temp_super_block->setSuper_block_size(j+1);
-           }
-           tail = temp_super_block;
-        }
-        this->setNext_super_block(tail);
-        this->next_super_block->setTotal_free_block_num(cur_size-1);
+       // 在new的时候 就已经vector-resize-50 next=null了
+       SUPER_BLOCK* temp_super_block = new SUPER_BLOCK();
+       temp_super_block->setSuper_block_num(super_block_num_flag++);
+       // 说明尾巴已经生成
+       if(tail != nullptr)
+       {
+         temp_super_block->setNext_super_block(tail);
+       }
+       // 初始块的next本来就是null
+       for(int j=0;
+           cur_size<=stack_data_block_size &&
+           j<temp_super_block->getSuper_block_size();
+           j++)
+       {
+          // 因为0号不存东西 所以不设置组长块
+          if(j == 0 && cur_size != 0)
+          {
+              temp_super_block->setAdmin_num(cur_size);
+          }
+          temp_super_block->disk_num_list[(unsigned long long)j] = cur_size++;
+          temp_super_block->setSuper_block_size(j+1);
+       }
+       tail = temp_super_block;
     }
+    this->setNext_super_block(tail);
+    this->next_super_block->setTotal_free_block_num(cur_size);
+
 }
 
 // 根据文件所需的数据块数目 返回对应的磁盘块序号 vector
@@ -79,8 +80,6 @@ vector<int> SUPER_BLOCK::distri_disk_free_block(int need_block_numbers)
            {
                // 替换全部第一个超级块内容 其实只替换所有空闲块总数就行
                this->next_super_block->next_super_block->total_free_block_num = this->next_super_block->total_free_block_num;
-               // 替换全部第一个超级块内容
-
                // 直接覆盖掉当前节点
                this->next_super_block = this->next_super_block->next_super_block;
            }
