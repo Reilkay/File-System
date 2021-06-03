@@ -34,6 +34,7 @@ public:
 
     bool createNewFile(string path, unsigned int master_ID);
     bool saveFile(char* content);
+    bool createNewDirectory(string path, unsigned int master_ID);
 
     // TODO:做多文件
     void delFile(QString file_path);
