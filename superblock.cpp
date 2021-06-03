@@ -1,5 +1,6 @@
 #include "superblock.h"
 #include "configure.h"
+#include <QDebug>
 
 // 方法实现
 // 重构默认构造
@@ -8,7 +9,7 @@ SUPER_BLOCK::SUPER_BLOCK()
     // 写0比较保险
     // this->super_block_num = SUPERFREEBLOCK;
     this->super_block_size = 0;
-    this->disk_num_list.resize(SUPERFREEBLOCK);
+    this->disk_num_list.reserve(SUPERFREEBLOCK);
     this->next_super_block = nullptr;
     this->total_free_block_num = 0;
 }
@@ -29,8 +30,11 @@ void SUPER_BLOCK::Init()
     SUPER_BLOCK* tail = nullptr;
     // cur_size用于记录当前的分配块号
 
+    qDebug() << "loops start";
+
     while(cur_size < DATABLOCKNUM)
     {
+       qDebug() << cur_size;
        // 在new的时候 就已经vector-resize-50 next=null了
        SUPER_BLOCK* temp_super_block = new SUPER_BLOCK();
        temp_super_block->setSuper_block_num(super_block_num_flag++);
@@ -41,8 +45,7 @@ void SUPER_BLOCK::Init()
        }
        // 初始块的next本来就是null
        for(int j=0;
-           cur_size<=stack_data_block_size &&
-           j<temp_super_block->getSuper_block_size();
+           cur_size<=DATABLOCKNUM && j<SUPERFREEBLOCK;
            j++)
        {
           // 因为0号不存东西 所以不设置组长块
@@ -50,11 +53,13 @@ void SUPER_BLOCK::Init()
           {
               temp_super_block->setAdmin_num(cur_size);
           }
-          temp_super_block->disk_num_list[(unsigned long long)j] = cur_size++;
+          temp_super_block->disk_num_list.push_back(cur_size);
+          cur_size += 1;
           temp_super_block->setSuper_block_size(j+1);
        }
        tail = temp_super_block;
     }
+    qDebug() << "loops end";
     this->setNext_super_block(tail);
     this->next_super_block->setTotal_free_block_num(cur_size);
 

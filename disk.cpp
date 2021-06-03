@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include <QDebug>
 
 using namespace std;
 
@@ -19,6 +20,23 @@ bool DISK::Recovery()
 
 void DISK::Init()
 {
+    Super_block.Init();
+    SFD root_SFD;
+    root_SFD.setSFD_ID(0);
+    all_sfd.push_back(root_SFD);
+    vector<char> auth = {'7', '5', '5'};
+    time_t tmp_time;
+    time(&tmp_time);                        //当前time_t类型UTC时间
+    BFD_ITEM_DISK root_dinode(0, // i结点的id
+                             0,     // 文件拥有者ID
+                             DIRECTORY,     // 文件类型
+                             auth,          // 权限（三位十进制数表示）
+                             0,             // 文件大小
+                             0,    // 文件地址（物理地址/下级目录ID）
+                             0,             // 文件链接计数
+                             tmp_time,      // 文件创建时间
+                             tmp_time);
+    d_inodes.addInode(root_dinode);
 }
 
 void DISK::setSuper_block(const SUPER_BLOCK &value)
@@ -197,7 +215,15 @@ vector<SFD> DISK::getAll_sfd() const
 // 寻找文件 返回inode的id 非常非常重要
 int DISK::findFile(QString file_path)
 {
-    QStringList split_path = file_path.split("/");
+    QStringList split_path = file_path.split("/",QString::SkipEmptyParts);
+//    for(QString i : split_path)
+//    {
+//        qDebug() << i;
+//    }
+    // 特判根目录
+    if(file_path == "/")
+        return 0;
+
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -215,11 +241,11 @@ int DISK::findFile(QString file_path)
                 }
                 // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
                 // 不是最后一级目录 却找到了文件 直接返回-1
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() != DIRECTORY) {
+                else if (layer != layer_max-1 && this->d_inodes.findInodeByNum(i.getID()).getF_type() != DIRECTORY) {
                     return -1;
                 }
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
+                else if (layer != layer_max-1 && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->findSfdIndexInTotalSfd(
                                     this->all_sfd[this->findSfd(this->d_inodes.findInodeByNum(i.getID()).getF_addr())]);
                 }
@@ -241,8 +267,9 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
             break;
         }
     }
-    dirpath = path.substr(0, split_index);
+    dirpath = path.substr(0, split_index+1);
     filename = path.substr(split_index + 1, path.length());
+    qDebug()<<"1";
     int dir_inode_id = findFile(QString::fromStdString(dirpath));
     if (dir_inode_id < 0) {
         // 文件目录不存在
@@ -260,6 +287,7 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
         // i节点用尽
         return false;
     }
+    qDebug()<<"2";
     vector<char> auth = {'7', '5', '5'};
     time_t tmp_time;
     time(&tmp_time);                        //当前time_t类型UTC时间
@@ -481,7 +509,7 @@ void DISK::copy_file(QString source, QString dest, int flag)
 {
     int file_layer = getFileCurPathIndex(source);
     int dir_layer = nofilenameGetFileCurPathIndex(dest);
-    QStringList split_path1 = source.split("/");
+    QStringList split_path1 = source.split("/",QString::SkipEmptyParts);
     string old_file_name = split_path1.back().toStdString();
     dest = dest + QString::fromStdString(old_file_name);
     string string_source = source.toStdString();
@@ -498,7 +526,7 @@ void DISK::copy_file(QString source, QString dest, int flag)
 
 int DISK::getFileCurPathIndex(QString file_path)
 {
-    QStringList split_path = file_path.split("/");
+    QStringList split_path = file_path.split("/",QString::SkipEmptyParts);
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -528,7 +556,7 @@ int DISK::getFileCurPathIndex(QString file_path)
 
 int DISK::nofilenameGetFileCurPathIndex(QString file_path)
 {
-    QStringList split_path = file_path.split("/");
+    QStringList split_path = file_path.split("/",QString::SkipEmptyParts);
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -572,7 +600,7 @@ void DISK::moveFileToDir(QString source, QString dest)
 {
     int file_layer = getFileCurPathIndex(source);
     int dir_layer = nofilenameGetFileCurPathIndex(dest);
-    QStringList split_path = source.split("/");
+    QStringList split_path = source.split("/",QString::SkipEmptyParts);
     string old_file_name = split_path.back().toStdString();
     // 找到文件 然后填在文件夹里 同时删除
     for (vector<SFD_ITEM>::iterator it = this->all_sfd[file_layer].getSFD_list().begin();
@@ -606,8 +634,8 @@ file_type DISK::getFileType(QString file_path)
 void DISK::changeFileName(QString source, QString dest)
 {
     int sfd_index = getFileCurPathIndex(source);
-    QStringList split_path = dest.split("/");
-    QStringList split_path2 = source.split("/");
+    QStringList split_path = dest.split("/",QString::SkipEmptyParts);
+    QStringList split_path2 = source.split("/",QString::SkipEmptyParts);
     string new_file_name = split_path.back().toStdString();
     string old_file_name = split_path2.back().toStdString();
     for (vector<SFD_ITEM>::iterator it = all_sfd[sfd_index].getSFD_list().begin();
