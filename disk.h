@@ -36,7 +36,7 @@ public:
     bool saveFile(char* content);
 
     // TODO:做多文件
-    bool delFile(QString file_path);
+    void delFile(QString file_path);
 
 
     vector<SFD> getAll_sfd() const;

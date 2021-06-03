@@ -50,3 +50,24 @@ void USER::setIsManager(bool value)
 {
     isManager = value;
 }
+
+void USER_TABLE::add_user(USER temp_user)
+{
+    this->user_table.push_back(temp_user);
+}
+
+bool USER_TABLE::del_user(USER temp_user)
+{
+
+}
+
+
+vector<USER> USER_TABLE::getUser_table() const
+{
+    return user_table;
+}
+
+void USER_TABLE::setUser_table(const vector<USER> &value)
+{
+    user_table = value;
+}

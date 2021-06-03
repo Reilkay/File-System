@@ -1,4 +1,5 @@
 #include "instruction.h"
+#include "disk.h"
 /*
 Instruction::Instruction(QObject *parent)
     : QAbstractItemModel(parent)
@@ -48,6 +49,13 @@ QVariant Instruction::data(const QModelIndex &index, int role) const
 
 QString Global_path = "/";
 QString Global_user = "";
+DISK disk;
+
+//QString 转 string
+string q2s(const QString &s)
+{
+return string((const char *)s.toLocal8Bit());
+}
 
 //获取用户输入文件名对应的路径
 QString get_true_path(QString str)
@@ -93,7 +101,7 @@ QStringList get_true_path_list(QString str)
             QStringList temp_path_list = new_path.split('/',QString::SkipEmptyParts);
             if(temp_path_list.count() == 0)
             {
-                new_path = "/"
+                new_path = "/";
             }
             else
             {
@@ -321,7 +329,7 @@ void cd(QStringList strList)
  */
 void pwd()
 {
-    qDebug()<<qPrintable("当前工作路径");
+    qDebug()<<qPrintable(Global_path);
 }
 
 /*
@@ -390,18 +398,20 @@ void mkdir(QStringList strList, QString user)
             file_place += 1;
         }
         QString file_name = strList[file_place];
+        file_name = get_true_path(file_name);
 
-        if(file_if_exist(file_name))    //判断是否存在
+        int file_id = disk.findFile(q2s(file_name));
+        if(file_id != -1)    //判断是否存在
         {
-            if(file_place == 1)
+            if(file_place == 1) //-p会确保文件存在，所以当存在时不报错
             {
-                qDebug().nospace()<<"mkdir: cannot create directory ‘"<<qPrintable(file_name)<<"’: File exists";
+                qDebug().nospace()<<"mkdir: cannot create directory ‘"<<qPrintable(strList[1])<<"’: File exists";
             }
             return ;
         }
 
         //获取当前工作的路径，以判断当前所拥有的权限
-        QStringList work_path_list = strList[1].split("/");
+        QStringList work_path_list = file_name.split("/", QString::SkipEmptyParts);
         QString work_path;
         if(work_path_list.count() == 1)
         {
@@ -413,7 +423,7 @@ void mkdir(QStringList strList, QString user)
             work_path = work_path_list.join("/");
         }
 
-        QString permission = file_permission("work_path");
+        QString permission = file_permission(work_path);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
@@ -2630,7 +2640,7 @@ void choose(QString str, QString user)
     else if (strList[0] == "adduser")
         adduser(strList,user);
     else if (strList[0] == "rmuser")
-        rmuser(strList[0],user)
+        rmuser(strList[0],user);
     else if (strList[0] == "touch")
         touch(strList,user);
     else if (strList[0] == "read")
