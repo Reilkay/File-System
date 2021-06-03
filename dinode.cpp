@@ -129,6 +129,21 @@ int BFD_DISK::getFreeInodeNum() const
     return freeInodeNum;
 }
 
+bool BFD_DISK::changeInodeByNum(int inode_id, BFD_ITEM_DISK new_inode)
+{
+    for(int i = 0; i < BFD_DISK_list.size(); i++) {
+        if(BFD_DISK_list[i].getDinode_ID() == inode_id) {
+            BFD_DISK_list[i].setAuth(new_inode.getAuth());
+            BFD_DISK_list[i].setF_size(new_inode.getF_size());
+            BFD_DISK_list[i].setF_addr(new_inode.getF_addr());
+            BFD_DISK_list[i].setF_link_num(new_inode.getF_link_num());
+            BFD_DISK_list[i].setF_change_time(new_inode.getF_change_time());
+            return true;
+        }
+    }
+    return false;
+}
+
 BFD_DISK::BFD_DISK()
 {
     this->BFD_DISK_list.resize(DINODEBLK * BLOCKSIZE / DINODESIZE);
@@ -143,12 +158,11 @@ BFD_ITEM_DISK BFD_DISK::findInodeByNum(int need_num)
     for(BFD_ITEM_DISK temp : this->BFD_DISK_list) {
         if(temp.getDinode_ID() == need_num) {
             return temp;
-        } else {
-            BFD_ITEM_DISK temp = BFD_ITEM_DISK();
-            temp.setDinode_ID(-1);
-            return temp;
         }
     }
+    BFD_ITEM_DISK temp = BFD_ITEM_DISK();
+    temp.setDinode_ID(-1);
+    return temp;
 }
 
 // TODO: get空闲InodeID

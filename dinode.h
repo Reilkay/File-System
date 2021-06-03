@@ -85,6 +85,7 @@ public:
     vector<BFD_ITEM_DISK> getBFD_DISK_list() const;
     void setBFD_DISK_list(const vector<BFD_ITEM_DISK> &value);
     int getFreeInodeNum() const;
+    bool changeInodeByNum(int inode_id, BFD_ITEM_DISK new_inode);
 };
 
 #endif // DINODE_H

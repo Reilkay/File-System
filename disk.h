@@ -30,7 +30,7 @@ public:
     void setD_block(const vector<DISK_BLOCK> &value);
 
     bool createNewFile(string path, unsigned int master_ID);
-    bool saveFile(char* content);
+    bool saveFile(int inode_id, char* content);
     bool createNewDirectory(string path, unsigned int master_ID);
     USER_TABLE getUser_table() const;
     void setUser_table(const USER_TABLE &value);
@@ -78,6 +78,10 @@ public:
     QString readFile(QString path);
     // 读取指定文件的一行
     QString readFileByLine(QString path);
+    // 编辑文件
+    bool EditFile(QString path, QString content);
+    // 写入文件尾（追加）
+    bool addLineInFile(QString path, QString content);
 
 
 
@@ -95,6 +99,8 @@ private:
     vector<DISK_BLOCK> d_block;
     // 用户表
     USER_TABLE user_table;
+    // 返回文件所用的磁盘块
+    vector<int> getBlocksUsedByFile(int inode_id);
 };
 
 #endif // DISK_H

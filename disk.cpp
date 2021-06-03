@@ -47,11 +47,13 @@ void DISK::setD_block(const vector<DISK_BLOCK> &value)
 }
 
 // 保存文件
-bool DISK::saveFile(char *content)
+bool DISK::saveFile(int inode_id, char *content)
 {
     int content_len = strlen(content);
     // 数据块个数
     int data_block_num = ceil(float(content_len) / BLOCKSIZE);
+    // 首块地址
+    int first_addr = 0;
     // 索引级数
     int need_index_rank = 0;
     float temp_shang = data_block_num;
@@ -81,6 +83,7 @@ bool DISK::saveFile(char *content)
         if (index_rank_num.size() == 0) {
             // 无需索引
             d_block[blocks_index[0]].setData(content);
+            first_addr = blocks_index[0];
         } else {
             int in = 0;
             for (in = 0; in < data_block_num; in++) {
@@ -93,6 +96,9 @@ bool DISK::saveFile(char *content)
             }
             for (unsigned int rank = 0; rank < index_rank_num.size(); rank++) {
                 // 保存各级索引块
+                if(int(rank) == in - 1) {// 最高级索引首块地址
+                    first_addr = in;
+                }
                 int unsaved_index_num;
                 if (rank == 0) {
                     unsaved_index_num = data_block_num;
@@ -115,6 +121,13 @@ bool DISK::saveFile(char *content)
                 }
             }
         }
+        BFD_ITEM_DISK tmp_bfd_item = d_inodes.findInodeByNum(inode_id);
+        tmp_bfd_item.setF_addr(first_addr);
+        time_t tmp_time;
+        time(&tmp_time); // 当前time_t类型UTC时间
+        tmp_bfd_item.setF_change_time(tmp_time);
+        tmp_bfd_item.setF_size(sum_num * BLOCKSIZE);
+        d_inodes.changeInodeByNum(inode_id, tmp_bfd_item);
         return true;
     } else {
         return false;
@@ -257,7 +270,7 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
                              -1,            // 文件地址（物理地址/下级目录ID）
                              0,             // 文件链接计数
                              tmp_time,      // 文件创建时间
-                             tmp_time);
+                             tmp_time);     // 文件修改时间
     // 保存i节点
     d_inodes.addInode(tmp_dinode);
     //添加至目录下
@@ -270,6 +283,8 @@ void DISK::delFile(QString file_path)
 {
     // 递归在前台做
     int inode_id = this->findFile(file_path);
+    // 回收磁盘块
+    Super_block.add_disk_free_block(getBlocksUsedByFile(inode_id));
     // 从BFD中删除
     for (vector<BFD_ITEM_DISK>::iterator it = this->d_inodes.getBFD_DISK_list().begin();
          it != this->d_inodes.getBFD_DISK_list().end();
@@ -477,7 +492,9 @@ void DISK::changeFileAuth(QString path, QString auth)
         }
         tmp_auth[i] = j + '0';
     }
-    d_inodes.findInodeByNum(findFile(path)).setAuth(tmp_auth);
+    BFD_ITEM_DISK tmp = d_inodes.findInodeByNum(findFile(path));
+    tmp.setAuth(tmp_auth);
+    d_inodes.changeInodeByNum(findFile(path), tmp);
 }
 
 bool DISK::fileIsEmpty(QString file_path)
@@ -639,6 +656,43 @@ QString DISK::readFileByLine(QString path)
         }
         return QString(QLatin1String(d_block[tmp_addr].getData()));
     }
+}
+
+bool DISK::EditFile(QString path, QString content)
+{
+    int tmp_inode_index = findFile(path);
+    Super_block.add_disk_free_block(getBlocksUsedByFile(tmp_inode_index));
+    string tmp = content.toStdString();
+    const char* ch = tmp.c_str();
+    saveFile(tmp_inode_index, const_cast<char*>(ch));
+}
+
+bool DISK::addLineInFile(QString path, QString content)
+{
+    QString total_content = readFile(path);
+    EditFile(path, total_content);
+}
+
+vector<int> DISK::getBlocksUsedByFile(int inode_id)
+{
+    vector<int> resu;
+    unsigned int addr_first = this->d_inodes.findInodeByNum(inode_id).getF_addr();
+    if(d_block[addr_first].getBlock_type() == CONTENT) {
+        resu.push_back(addr_first);
+    } else {
+        vector<int> addr_seconds = d_block[addr_first].getIndex();
+        if(d_block[addr_seconds[0]].getBlock_type() == CONTENT) {
+            resu.insert(resu.end(), addr_seconds.begin(), addr_seconds.end());
+        } else {
+            for(int i = 0; i < d_block[addr_first].getIndex_num(); i++) {
+                vector<int> addr_thirds = d_block[addr_seconds[i]].getIndex();
+                if(d_block[addr_thirds[0]].getBlock_type() == CONTENT) {
+                    resu.insert(resu.end(), addr_thirds.begin(), addr_thirds.end());
+                }
+            }
+        }
+    }
+    return resu;
 }
 
 void DISK::chang_user_pass(string user_name, string pass)
