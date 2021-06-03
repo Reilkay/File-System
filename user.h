@@ -39,6 +39,7 @@ public:
     USER_TABLE(){}
     void add_user(USER temp_user);
     bool del_user(USER temp_user);
+    USER find_user(string user_name);
 
     vector<USER> getUser_table() const;
     void setUser_table(const vector<USER> &value);
