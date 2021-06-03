@@ -45,7 +45,7 @@ char *DISK_BLOCK::getData()
 
 void DISK_BLOCK::setData(char* content)
 {
-    strcpy_s(this->data, content);
+    strncpy(this->data, content, strlen(content) + 1);
 }
 
 vector<int> DISK_BLOCK::getIndex() const
