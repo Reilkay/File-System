@@ -131,6 +131,60 @@ bool DISK::saveFile(char *content)
     }
 }
 
+bool DISK::createNewDirectory(string path, unsigned int master_ID)
+{
+    string dirpath, directoryname;
+    //划分目录和文件
+    int split_index = path.length() - 1;
+    for (; split_index >= 0; split_index--) {
+        if (path[split_index] == '/') {
+            break;
+        }
+    }
+    dirpath = path.substr(0, split_index);
+    directoryname = path.substr(split_index + 1, path.length());
+    int dir_inode_id = findFile(QString::fromStdString(dirpath));
+    if (dir_inode_id < 0) {
+        // 文件目录不存在
+        return false;
+    }
+    BFD_ITEM_DISK tmp_bfd_item = d_inodes.findInodeByNum(dir_inode_id);
+    // 检查重名问题
+    if (all_sfd[tmp_bfd_item.getF_addr()].findSfd_item(directoryname) != -1) {
+        // 有同名文件
+        return false;
+    }
+    // 检测是否有空闲i节点
+    int free_inode_id = d_inodes.getFreeInode();
+    if (free_inode_id < 0) {
+        // i节点用尽
+        return false;
+    }
+    // 创建新SFD
+    SFD new_SFD;
+    int new_SFD_id = all_sfd.back().getSFD_ID() + 1;
+    new_SFD.setSFD_ID(new_SFD_id);
+    all_sfd.push_back(new_SFD);
+    vector<char> auth = {'7', '5', '5'};
+    time_t tmp_time;
+    time(&tmp_time);                        //当前time_t类型UTC时间
+    BFD_ITEM_DISK tmp_dinode(free_inode_id, // i结点的id
+                             master_ID,     // 文件拥有者ID
+                             DIRECTORY,     // 文件类型
+                             auth,          // 权限（三位十进制数表示）
+                             0,             // 文件大小
+                             new_SFD_id,    // 文件地址（物理地址/下级目录ID）
+                             0,             // 文件链接计数
+                             tmp_time,      // 文件创建时间
+                             tmp_time);
+    // 保存i节点
+    d_inodes.addInode(tmp_dinode);
+    //添加至目录下
+    SFD_ITEM tmp_sfd_item(directoryname, free_inode_id);
+    all_sfd[tmp_bfd_item.getF_addr()].addSfd_item(tmp_sfd_item);
+    return true;
+}
+
 vector<SFD> DISK::getAll_sfd() const
 {
     return all_sfd;
@@ -157,11 +211,11 @@ int DISK::findFile(QString file_path)
                 }
                 // 如果不是最后一级目录 分两种情况 可能是文件夹 可能是文件
                 // 不是最后一级目录 却找到了文件 直接返回-1
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() != directory) {
+                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() != DIRECTORY) {
                     return -1;
                 }
                 // 不是最后一级目录 找到了文件夹 更新cur_layer
-                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == directory) {
+                else if (layer != layer_max && this->d_inodes.findInodeByNum(i.getID()).getF_type() == DIRECTORY) {
                     cur_layer = this->find_sfd_index_in_total_sfd(all_sfd[cur_layer]);
                 }
                 continue;
@@ -218,6 +272,7 @@ bool DISK::createNewFile(string path, unsigned int master_ID)
     //添加至目录下
     SFD_ITEM tmp_sfd_item(filename, free_inode_id);
     all_sfd[tmp_bfd_item.getF_addr()].addSfd_item(tmp_sfd_item);
+    return true;
 }
 
 void DISK::delFile(QString file_path)
@@ -354,6 +409,16 @@ int DISK::find_sfd_index_in_total_sfd(SFD temp_sfd)
 {
     for (unsigned long long i = 0; i < this->all_sfd.size(); i++) {
         if (this->all_sfd[i].getSFD_ID() == temp_sfd.getSFD_ID()) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int DISK::find_sfd(int sfd_id)
+{
+    for(unsigned int i = 0; i < all_sfd.size(); i++) {
+        if(all_sfd[i].getSFD_ID() == sfd_id) {
             return i;
         }
     }

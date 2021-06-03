@@ -34,6 +34,7 @@ public:
 
     bool createNewFile(string path, unsigned int master_ID);
     bool saveFile(char* content);
+    bool createNewDirectory(string path, unsigned int master_ID);
 
     // TODO:做多文件
     void delFile(QString file_path);
@@ -49,6 +50,8 @@ public:
     void Dfs_del_dir(int cur_layer, int max_layer);
 
     int find_sfd_index_in_total_sfd(SFD temp_sfd);
+    // 根据sfd_id寻找sfd
+    int find_sfd(int sfd_id);
 
 private:
     // 成组链接的首个超级块
