@@ -38,6 +38,11 @@ void DISK_BLOCK::setFile_name(const string &value)
     file_name = value;
 }
 
+char *DISK_BLOCK::getData()
+{
+    return this->data;
+}
+
 void DISK_BLOCK::setData(char* content)
 {
     strcpy_s(this->data, content);
