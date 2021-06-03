@@ -57,6 +57,12 @@ string q2s(const QString &s)
 return string((const char *)s.toLocal8Bit());
 }
 
+//string 转 QString
+QString s2q(const string &s)
+{
+return QString(QString::fromLocal8Bit(s.c_str()));
+}
+
 //获取用户输入文件名对应的路径
 QString get_true_path(QString str)
 {
@@ -345,8 +351,8 @@ void ls(QStringList strList)
             if(status[2] == 1)
             {
                 if(work_path != Global_path)
-                    ans1 = ans1 + disk.get(work_path) + QString(get_file_list(work_path).count()) + get_creator(work_path) + Global_user + get_filetime(work_path) +"..";
-                ans2 = ans2 + get_permission(Global_path) + QString(get_file_list(Global_path).count()) + get_creator(Global_path) + Global_user + get_filetime(Global_path) +".";
+                    ans1 = ans1 + disk.getFileAuth(work_path) + QString(disk.getFileList(work_path).count()) + s2q(disk.getFileCreater(work_path)) + Global_user + disk.getFileChangeTime(work_path) +"..";
+                ans2 = ans2 + disk.getFileAuth(Global_path) + QString(disk.getFileList(Global_path).count()) + s2q(disk.getFileCreater(Global_path)) + Global_user + disk.getFileChangeTime(Global_path) +".";
             }
             else
             {
@@ -357,7 +363,7 @@ void ls(QStringList strList)
             ans_list << ans1 << ans2;
         }
         if(status[3] == 1)
-            qSort(file_list.begin(), file_list.end(), [](const QString& s1, const QString& s2){return get_file_create_time(s1) < get_file_create_time(s1); });
+            qSort(file_list.begin(), file_list.end(), [](const QString& s1, const QString& s2){return disk.getFileCreateTime(s1) < disk.getFileCreateTime(s2); });
 
         for(int i=0;i<file_list.count();i++)
         {
@@ -367,7 +373,7 @@ void ls(QStringList strList)
             if(only_filename[0] == '.' && status[0] != 1 )
                 continue ;
             if(status[2] == 1)
-                ans = ans + get_permission(file_list[i]) + QString(get_file_list(file_list[i]).count()) + get_creator(file_list[i]) + Global_user + get_filetime(file_list[i]) + only_filename;
+                ans = ans + disk.getFileAuth(file_list[i]) + QString(disk.getFileList(file_list[i]).count()) + s2q(disk.getFileCreater(file_list[i])) + Global_user + disk.getFileChangeTime(file_list[i]) + only_filename;
             else
                 ans = only_filename;
             ans_list << ans ;
@@ -518,29 +524,29 @@ void mkdir(QStringList strList)
                 work_path = work_path_list.join("/");
         }
 
-        QString permission = file_permission(work_path);
+        QString permission = disk.getFileAuth(work_path);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        QString creator = get_creator(work_path);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(work_path));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[1] == 'r')
-                create_directory(file_name);
+                disk.createNewDirectory(q2s(file_name),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[4] == 'r')
-                create_directory(file_name);
+                disk.createNewDirectory(q2s(file_name),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
         else    //others
         {
             if(permission[7] == 'r')
-                create_directory(file_name);
+                disk.createNewDirectory(q2s(file_name),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
@@ -619,13 +625,13 @@ void rmdir(QStringList strList)
             return ;
         }
 
-        if(get_file_type(file_name) != "directory")
+        if(disk.getFileType(file_name) != 0)
         {
             qDebug().nospace()<<"rmdir: failed to remove ‘"<<qPrintable(strList[file_place])<<"’: Not a directory";
             return ;
         }
 
-        if(!if_empty(file_name))    //判断文件目录是否为空
+        if(disk.getFileList(file_name).count() > 0)    //判断文件目录是否为空
         {
             qDebug().nospace()<<"rmdir: failed to remove ‘"<<qPrintable(strList[file_place])<<"’: Directory not empty";
             return ;
@@ -649,46 +655,46 @@ void rmdir(QStringList strList)
                     work_path = work_path_list.join("/");
             }
 
-            QString permission = file_permission(file_name);    //删除为获取所删除的目录的权限
+            QString permission = disk.getFileAuth(file_name);    //删除为获取所删除的目录的权限
             //permission 格式为 ‘drwxrwxrwx'
-            QString creator = get_creator(file_name);
-            if(Global_user == "root" || Global_user == creator)    //owner
+            QString creater = s2q(disk.getFileCreater(file_name));
+            if(Global_user == "root" || Global_user == creater)    //owner
             {
                 if(permission[2] == 'w')
-                    delete_file(file_name);
+                    disk.delFile(file_name);
                 else
                     qDebug()<<"Permission denied";
             }
-            else if(get_uesr_permissions(Global_user))   //获取权限，group
+            else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
             {
                 if(permission[5] == 'w')
-                    delete_file(file_name);
+                    disk.delFile(file_name);
                 else
                     qDebug()<<"Permission denied";
             }
             else    //others
             {
                 if(permission[8] == 'w')
-                    delete_file(file_name);
+                    disk.delFile(file_name);
                 else
                     qDebug()<<"Permission denied";
             }
 
             file_name = work_path;
 
-        }while(!if_empty(file_name) && file_name != "当前路径" && file_place == 2);
+        }while((disk.getFileList(file_name).count() > 0) && file_name != "当前路径" && file_place == 2);
     }
 }
 
 /*rm对文件目录进行递归删除*/
 void rm_del(QString filename,int ask)
 {
-    while(!if_empty(filename))
+    while(disk.getFileList(filename).count() > 0)
     {
-        QStringList file_list = get_file_list(filename);
+        QStringList file_list = disk.getFileList(filename);
         for(int i=0;i<file_list.count();i++)
         {
-            if(get_file_type(file_list[i]) == "文件目录")
+            if(disk.getFileType(file_list[i]) == 0)
                 rm_del(file_list[i],ask);
             else
             {
@@ -702,27 +708,27 @@ void rm_del(QString filename,int ask)
                 if(!ask || delete_answer == 'y')
                 {
 
-                    QString permission = file_permission(file_list[i]);
+                    QString permission = disk.getFileAuth(file_list[i]);
                     //permission 格式为 ‘drwxrwxrwx'
-                    QString creator = get_creator(file_list[i]);
-                    if(Global_user == "root" || Global_user == creator)    //owner
+                    QString creater = s2q(disk.getFileCreater(file_list[i]));
+                    if(Global_user == "root" || Global_user == creater)    //owner
                     {
                         if(permission[2] == 'w')
-                            delete_file(file_list[i]);
+                            disk.delFile(file_list[i]);
                         else
                             qDebug()<<"Permission denied";
                     }
-                    else if(get_uesr_permissions(Global_user))   //获取权限，group
+                    else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
                     {
                         if(permission[5] == 'w')
-                            delete_file(file_list[i]);
+                            disk.delFile(file_list[i]);
                         else
                             qDebug()<<"Permission denied";
                     }
                     else    //others
                     {
                         if(permission[8] == 'w')
-                            delete_file(file_list[i]);
+                            disk.delFile(file_list[i]);
                         else
                             qDebug()<<"Permission denied";
                     }
@@ -743,27 +749,27 @@ void rm_del(QString filename,int ask)
     if(!ask || delete_answer == 'y')
     {
 
-        QString permission = file_permission(filename);
+        QString permission = disk.getFileAuth(filename);
         //permission 格式为 ‘drwxrwxrwx'
-        QString creator = get_creator(filename);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(filename));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[2] == 'w')
-                delete_file(filename);
+                disk.delFile(filename);
             else
                 qDebug()<<"Permission denied";
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[5] == 'w')
-                delete_file(filename);
+                disk.delFile(filename);
             else
                 qDebug()<<"Permission denied";
         }
         else    //others
         {
             if(permission[8] == 'w')
-                delete_file(filename);
+                disk.delFile(filename);
             else
                 qDebug()<<"Permission denied";
         }
@@ -894,33 +900,33 @@ void rm(QStringList strList)
                 return ;
             }
 
-            if(get_file_type(file_name) != "文件")    // 文件目录需以'-r'命令删除
+            if(disk.getFileType(file_name) != 0)    // 文件目录需以'-r'命令删除
             {
                 qDebug().nospace()<<"rm: remove regular file ‘"<<file_name<<"’?";
                 QString delete_answer = get_delete_answer();    //获取用户输入
                 if(delete_answer == 'y')
                 {
-                    QString permission = file_permission(file_name);
+                    QString permission = disk.getFileAuth(file_name);
                     //permission 格式为 ‘drwxrwxrwx'
-                    QString creator = get_creator(file_name);
-                    if(Global_user == "root" || Global_user == creator)    //owner
+                    QString creater = s2q(disk.getFileCreater(file_name));
+                    if(Global_user == "root" || Global_user == creater)    //owner
                     {
                         if(permission[2] == 'w')
-                            delete_file(file_name);
+                            disk.delFile(file_name);
                         else
                             qDebug()<<"Permission denied";
                     }
-                    else if(get_uesr_permissions(Global_user))   //获取权限，group
+                    else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
                     {
                         if(permission[5] == 'w')
-                            delete_file(file_name);
+                            disk.delFile(file_name);
                         else
                             qDebug()<<"Permission denied";
                     }
                     else    //others
                     {
                         if(permission[8] == 'w')
-                            delete_file(file_name);
+                            disk.delFile(file_name);
                         else
                             qDebug()<<"Permission denied";
                 }
@@ -1078,7 +1084,7 @@ void mv(QStringList strList)
         for(int i=0;i<source_file_list.count();i++)
         {
             QString source_file = source_file_list[i];
-            QString type1;
+            int type1;
             if(source_file_list.count() == 1)
             {
                 if(disk.findFile(source_file) == -1)    //判断是否存在
@@ -1087,26 +1093,26 @@ void mv(QStringList strList)
                     return ;
                 }
 
-                type1 = get_file_type(source_file);
+                type1 = disk.getFileType(source_file);
             }
             else
-                type1 = "directory";
+                type1 = 0;
 
             if(dest_file_id == -1)
             {
-                QString permission1 = file_permission(source_file);
-                QString permission2 = file_permission(dest_file);
+                QString permission1 = disk.getFileAuth(source_file);
+                QString permission2 = disk.getFileAuth(dest_file);
 
                 if(status[4] == 1)  //当源文件比目标文件新或者目标文件不存在时，才执行移动操作
                 {
-                    if(get_filetime(source_file) < get_filetime(dest_file))
+                    if(disk.getFileChangeTime(source_file) < disk.getFileChangeTime(dest_file))
                         return ;
                 }
 
                 //permission 格式为 ‘drwxrwxrwx'
-                QString creator1 = get_creator(source_file);
-                QString creator2 = get_creator(dest_file);
-                if(Global_user == "root" || (Global_user == creator1 && Global_user == creator2))    //owner
+                QString creater1 = s2q(disk.getFileCreater(source_file));
+                QString creater2 = s2q(disk.getFileCreater(dest_file));
+                if(Global_user == "root" || (Global_user == creater1 && Global_user == creater2))    //owner
                 {
                     if(permission1[2] != 'w' || permission2[2] != 'w')
                     {
@@ -1114,7 +1120,7 @@ void mv(QStringList strList)
                         return ;
                     }
                 }
-                else if(get_uesr_permissions(Global_user))   //获取权限，group
+                else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
                 {
                     if(permission1[5] != 'w' || permission2[5] != 'w')
                     {
@@ -1131,9 +1137,9 @@ void mv(QStringList strList)
                     }
                 }
 
-                QString type2 = get_file_type(dest_file);
+                int type2 = disk.getFileType(dest_file);
 
-                if(type1 == "file" && type2 == "file")  //对文件重命名
+                if(type1 != 0 && type2 != 0)  //对文件重命名
                 {
                     if(status[3] == 1)return ;  //-n不执行覆盖操作
 
@@ -1146,13 +1152,13 @@ void mv(QStringList strList)
                     if(delete_answer == 'y')
                     {
                         if(status[0] == 1)  //-b对原文件备份
-                            change_name(dest_file,dest_file+'~');
+                            disk.changeFileName(dest_file,dest_file+'~');
                         else
-                            delete_file(dest_file);
-                        change_name(source_file,dest_file);
+                            disk.delFile(dest_file);
+                        disk.changeFileName(source_file,dest_file);
                     }
                 }
-                else if(type1 == "file" && type2 == "directory") //将文件移动到目录下
+                else if(type1 != 0 && type2 == 0) //将文件移动到目录下
                 {
                     if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
                     {
@@ -1167,16 +1173,16 @@ void mv(QStringList strList)
                         if(delete_answer == 'y')
                         {
                             if(status[0] == 1)  //-b对原文件备份
-                                change_name(dest_file,dest_file+'~');
+                                disk.changeFileName(dest_file,dest_file+'~');
                             else
-                                delete_file(dest_file);
-                            change_name(source_file,dest_file);
+                                disk.delFile(dest_file);
+                            disk.changeFileName(source_file,dest_file);
                         }
                     }
                     else
-                        move_file_to_Directory(source_file,dest_file);
+                        disk.moveFileToDir(source_file,dest_file);
                 }
-                else if(type1 == "directory" && type2 == "directory")  //将目录移动到目录type2下
+                else if(type1 == 0 && type2 == 0)  //将目录移动到目录type2下
                 {
                     if(directory_have_file(source_file,dest_file))  //判断目录下是否有同名文件
                     {
@@ -1191,16 +1197,16 @@ void mv(QStringList strList)
                         if(delete_answer == 'y')
                         {
                             if(status[0] == 1)  //-b对原文件备份
-                                change_name(dest_file,dest_file+'~');
+                                disk.changeFileName(dest_file,dest_file+'~');
                             else
-                                delete_file(dest_file);
-                            change_name(source_file,dest_file);
+                                disk.delFile(dest_file);
+                            disk.changeFileName(source_file,dest_file);
                         }
                     }
                     else
-                        move_file_to_Directory(source_file,dest_file);
+                        disk.moveFileToDir(source_file,dest_file);
                 }
-                else if(type1 == "directory" && type2 == "file")    //error
+                else if(type1 == 0 && type2 != 0)    //error
                 {
                     if(status[3] == 1)return ;  //-n不执行覆盖操作
 
@@ -1218,27 +1224,27 @@ void mv(QStringList strList)
             }
             else    //改名
             {
-                QString permission = file_permission(source_file);    //删除为获取所删除的目录的权限
+                QString permission = disk.getFileAuth(source_file);    //删除为获取所删除的目录的权限
                 //permission 格式为 ‘drwxrwxrwx'
-                QString creator = get_creator(source_file);
-                if(Global_user == "root" || Global_user == creator)    //owner
+                QString creater = s2q(disk.getFileCreater(source_file));
+                if(Global_user == "root" || Global_user == creater)    //owner
                 {
                     if(permission[2] == 'w')
-                        change_name(source_file,dest_file);
+                        disk.changeFileName(source_file,dest_file);
                     else
                         qDebug()<<"Permission denied";
                 }
-                else if(get_uesr_permissions(Global_user))   //获取权限，group
+                else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
                 {
                     if(permission[5] == 'w')
-                        change_name(source_file,dest_file);
+                        disk.changeFileName(source_file,dest_file);
                     else
                         qDebug()<<"Permission denied";
                 }
                 else    //others
                 {
                     if(permission[8] == 'w')
-                        change_name(source_file,dest_file);
+                        disk.changeFileName(source_file,dest_file);
                     else
                         qDebug()<<"Permission denied";
                 }
@@ -1431,10 +1437,10 @@ void cp(QStringList strList)
             }
             else
             {
-                create_directory(dest_file);
+                disk.createNewDirectory(q2s(dest_file),Global_user);
             }
 
-            QString permission1 = file_permission(source_file);
+            QString permission1 = disk.getFileAuth(source_file);
 
             //获取工作的路径，以判断所拥有的权限
             QStringList work_path_list = dest_file.split("/");
@@ -1452,11 +1458,11 @@ void cp(QStringList strList)
                     work_path = work_path_list.join("/");
             }
 
-            QString permission2 = file_permission(work_path);
+            QString permission2 = disk.getFileAuth(work_path);
 
             //permission 格式为 ‘drwxrwxrwx'
-            QString creator = get_creator(work_path);
-            if(Global_user == "root" || Global_user == creator)    //owner
+            QString creater = s2q(disk.getFileCreater(work_path));
+            if(Global_user == "root" || Global_user == creater)    //owner
             {
                 if(permission1[2] != 'w' || permission2[2] != 'w')
                 {
@@ -1464,7 +1470,7 @@ void cp(QStringList strList)
                     return ;
                 }
             }
-            else if(get_uesr_permissions(Global_user))   //获取权限，group
+            else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
             {
                 if(permission1[5] != 'w' || permission2[5] != 'w')
                 {
@@ -1481,9 +1487,9 @@ void cp(QStringList strList)
                 }
             }
 
-            QString type1 = get_file_type(source_file);
+            int type = disk.getFileType(source_file);
 
-            if(type1 == "目录" && status[2] == 0)
+            if(type == 0 && status[2] == 0)
             {
                 qDebug().nospace()<<"cp: omitting directory ‘"<<qPrintable(source_file)<<"’";
                 return ;
@@ -1520,12 +1526,12 @@ void cat(QStringList strList)
             return ;
         }
 
-        QString permission = file_permission(file_name);
+        QString permission = disk.getFileAuth(file_name);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        QString creator = get_creator(file_name);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(file_name));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[1] != 'r')
             {
@@ -1533,7 +1539,7 @@ void cat(QStringList strList)
                 return ;
             }
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[4] != 'r')
             {
@@ -1550,7 +1556,7 @@ void cat(QStringList strList)
             }
         }
 
-        QString message = read_all_line(file_name);
+        QString message = disk.readFile(file_name);
 
         qDebug()<< message;
     }
@@ -1605,7 +1611,7 @@ void whereis(QStringList strList)
     else
     {
         QString file_name = strList[1]; //模糊文件名，非全局路径
-        QStringList ans_list = whereis_file(file_name);
+        QStringList ans_list = disk.whereis(file_name);
         for(int i=0;i<ans_list.count();i++)
             qDebug()<<ans_list[i];
     }
@@ -1636,7 +1642,7 @@ void find(QStringList strList)
             return ;
         }
 
-        QStringList ans_list = find_file_path(directory_name,file_name);
+        QStringList ans_list = disk.find_file_path(directory_name,file_name);
         for(int i=0;i<ans_list.count();i++)
             qDebug()<<ans_list[i];
     }
@@ -1644,7 +1650,7 @@ void find(QStringList strList)
 
 void add_permission(QString filename,int mum[3],QString p)
 {
-    QString n_p = get_permission(filename);
+    QString n_p = disk.getFileAuth(filename);
     for(int i=0;i<3;i++)
     {
         if(mum[i] != 0)
@@ -1657,12 +1663,12 @@ void add_permission(QString filename,int mum[3],QString p)
                 n_p[i*3 + 3] = 'x';
         }
     }
-    change_permission(filename,n_p);
+    disk.changeFileAuth(filename,n_p);
 }
 
 void sub_permission(QString filename,int mum[3],QString p)
 {
-    QString n_p = get_permission(filename);
+    QString n_p = disk.getFileAuth(filename);
     for(int i=0;i<3;i++)
     {
         if(mum[i] != 0)
@@ -1675,13 +1681,13 @@ void sub_permission(QString filename,int mum[3],QString p)
                 n_p[i*3 + 3] = 'x';
         }
     }
-    change_permission(filename,n_p);
+    disk.changeFileAuth(filename,n_p);
 }
 
 void update_permission(QString filename,int mum[3],QString p)
 {
     QString n_p = "";
-    if(get_file_type(filename) == "directory")
+    if(disk.getFileType(filename) == 0)
         n_p = n_p + "d";
     else
         n_p = n_p + "-";
@@ -1705,7 +1711,7 @@ void update_permission(QString filename,int mum[3],QString p)
                 n_p += 'x';
         }
     }
-    change_permission(filename,n_p);
+    disk.changeFileAuth(filename,n_p);
 }
 
 /*
@@ -1807,11 +1813,11 @@ void chmod(QStringList strList)
 
                 for(int j=0;j<file_num;j++)
                 {
-                    if(get_file_type(file_name[j]) == "directory")
+                    if(disk.getFileAuth(file_name[j]) == 0)
                         n_p = "d" + n_p;
                     else
                         n_p = "-" + n_p;
-                    change_permission(file_name[j],n_p);
+                    disk.changeFileAuth(file_name[j],n_p);
                 }
             }
         }
@@ -1947,13 +1953,13 @@ void login(QStringList strList)
         return ;
     }
     QString user_name = strList[1];
-    if(ues_exist(user_name) == -1)
+    if(!disk.userExist(q2s(user_name)))
     {
         qDebug().nospace()<<"login: failed to login '"<<qPrintable(user_name)<<"': user not exists.";
         return ;
     }
     QString psword = get_password();    //输入
-    QString password = get_user_password(user_name);
+    QString password = s2q(disk.getUserPass(q2s(user_name)));
 
     if(psword == password)
         Global_user = user_name;
@@ -2047,12 +2053,12 @@ void adduser(QStringList strList)
         return ;
     }
     QString username = strList[1];
-    if(user_exist(username))
+    if(disk.userExist(q2s(username)))
     {
         qDebug().nospace()<<"adduser: failed to add user '"<<qPrintable(username)<<"': user exists.";
         return ;
     }
-    add_user(username);
+    disk.addUser(q2s(username));
 }
 
 /*
@@ -2074,7 +2080,7 @@ void passwd(QStringList strList)
         return ;
     }
     QString username = strList[1];
-    if(!user_exist(username))
+    if(disk.userExist(q2s(username)))
     {
         qDebug().nospace()<<"passwd: failed to input password '"<<qPrintable(username)<<"': user not exists.";
         return ;
@@ -2088,7 +2094,7 @@ void passwd(QStringList strList)
         qDebug()<<"passwd: all authentication tokens updated sucefully.";
     else
         qDebug()<<"passwd: the two passwords are inconsistent, modification failed";
-    set_password(Global_user,get_pw1);
+    disk.changeUserPass(q2s(Global_user),q2s(get_pw1));
 }
 
 /*
@@ -2110,12 +2116,12 @@ void rmuser(QStringList strList)
         return ;
     }
     QString username = strList[1];
-    if(!user_exist(username))
+    if(disk.userExist(q2s(username)))
     {
         qDebug().nospace()<<"rmuser: failed to remove user '"<<qPrintable(username)<<"': user not exists.";
         return ;
     }
-    remove_user(username);
+    disk.delUser(q2s(username));
 }
 
 
@@ -2153,29 +2159,29 @@ void touch(QStringList strList)
                 work_path = work_path_list.join("/");
         }
 
-        QString permission = file_permission(work_path);
+        QString permission = disk.getFileAuth(work_path);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        QString creator = get_creator(work_path);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(work_path));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[1] == 'r')
-                create_file(filename);
+                disk.createNewFile(q2s(filename),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[4] == 'r')
-                create_file(filename);
+                disk.createNewFile(q2s(filename),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
         else    //others
         {
             if(permission[7] == 'r')
-                create_file(filename);
+                disk.createNewFile(q2s(filename),Global_user);
             else
                 qDebug()<<"Permission denied";
         }
@@ -2218,12 +2224,12 @@ void read(QStringList strList)
             return ;
         }
 
-        QString permission = file_permission(file_name);
+        QString permission = disk.getFileAuth(file_name);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        QString creator = get_creator(file_name);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(file_name));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[1] != 'r')
             {
@@ -2231,7 +2237,7 @@ void read(QStringList strList)
                 return ;
             }
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[4] != 'r')
             {
@@ -2248,7 +2254,7 @@ void read(QStringList strList)
             }
         }
 
-        QString message = read_one_line(file_name);
+        QString message = disk.readFileByLine(file_name);
 
         qDebug()<< message;
     }
@@ -2279,12 +2285,12 @@ void write(QStringList strList)
             return ;
         }
 
-        QString permission = file_permission(file_name);
+        QString permission = disk.getFileAuth(file_name);
 
         //permission 格式为 ‘drwxrwxrwx'
         //权限判断
-        QString creator = get_creator(file_name);
-        if(Global_user == "root" || Global_user == creator)    //owner
+        QString creater = s2q(disk.getFileCreater(file_name));
+        if(Global_user == "root" || Global_user == creater)    //owner
         {
             if(permission[2] != 'w')
             {
@@ -2292,7 +2298,7 @@ void write(QStringList strList)
                 return ;
             }
         }
-        else if(get_uesr_permissions(Global_user))   //获取权限，group
+        else if(disk.getUserGroup(q2s(Global_user)))   //获取权限，group
         {
             if(permission[5] != 'w')
             {
@@ -2310,7 +2316,7 @@ void write(QStringList strList)
         }
 
         QString context = strList[2];
-        write_one_line(file_name,context);  //写入文件尾
+        disk.addLineInFile(file_name,context);  //写入文件尾
 
     }
 }
@@ -2808,7 +2814,7 @@ void help(QStringList strList)
         }
         else
         {
-            if (strList[1].length() > 2 && strList[1][0] == '-' && strList[1][1] != ('d' || 'm' || 's')) //e.g. help -a ls
+            if (strList[1].length() > 2 && strList[1][0] == '-' && (strList[1][1] != 'd' || strList[1][1] != 'm' || strList[1][1] != 's')) //e.g. help -a ls
                 flag1 = false;
             else    //e.g. help ls || help - ls || help -l ls
                 flag2 = false;
@@ -2908,7 +2914,7 @@ void choose(QString str)
         format();
     else if (strList[0] == "sudo")
     {
-        QString psword = get_root_password();
+        QString psword = s2q(disk.getRootPass());
         if(psword == "root")
         {
             str = str.mid(5);
