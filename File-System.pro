@@ -9,6 +9,8 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    dialog_inputpass.cpp \
+    dialog_inputyn.cpp \
     dinode.cpp \
     disk.cpp \
     diskblock.cpp \
@@ -22,6 +24,8 @@ SOURCES += \
 
 HEADERS += \
     configure.h \
+    dialog_inputpass.h \
+    dialog_inputyn.h \
     dinode.h \
     disk.h \
     diskblock.h \
@@ -33,6 +37,8 @@ HEADERS += \
     user.h
 
 FORMS += \
+    dialog_inputpass.ui \
+    dialog_inputyn.ui \
     mainwindow.ui
 
 # Default rules for deployment.
