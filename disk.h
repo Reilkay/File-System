@@ -34,7 +34,7 @@ public:
     USER_TABLE getUser_table() const;
     void setUser_table(const USER_TABLE &value);
 
-    // TODO:做多文件
+    // fixed:做多文件
     void delFile(QString file_path);
 
     vector<SFD> getAll_sfd() const;
@@ -44,7 +44,7 @@ public:
 
     void setAll_sfd(const vector<SFD> &value);
 
-    void Dfs_del_dir(int cur_layer, int max_layer);
+    // void Dfs_del_dir(int cur_layer, int max_layer);
 
     int findSfdIndexInTotalSfd(SFD temp_sfd);
 
@@ -60,7 +60,7 @@ public:
 
     // 文件是否为空 为空返回true
     bool fileIsEmpty(QString file_path);
-    // 将文件移动到指定文件夹
+    // fixed:将文件移动到指定文件夹
     void moveFileToDir(QString source, QString dest);
     // 全局查找file
 
@@ -69,7 +69,7 @@ public:
 
     // 获取文件类型
     file_type getFileType(QString file_path);
-    // 更改文件名
+    // fixed:更改文件名
     void changeFileName(QString source, QString dest);
     // 获取文件修改时间
     time_t getFileChangeTime(QString file_path);
@@ -82,13 +82,13 @@ public:
     // 根据用户名寻找用户id
     int getUserIdByUsenName(string user_name);
 
-    // 新增用户
+    // fixed:新增用户
     void addUser(string user_name);
-    // 删除用户
+    // fixed:删除用户
     void delUser(string user_name);
     // 获取用户对应的用户组
     int getUserGroup(string user_name);
-    // 更改用户密码
+    // fixed:更改用户密码
     void changeUserPass(string user_name, string pass);
     // 判断用户是否存在 存在返回true
     bool userExist(string user_name);
