@@ -51,19 +51,19 @@ QVariant Instruction::data(const QModelIndex &index, int role) const
 
 
 //QString 转 string
-string q2s(const QString &s)
+string CMD::q2s(const QString &s)
 {
     return s.toStdString();
 }
 
 //string 转 QString
-QString s2q(const string &s)
+QString CMD::s2q(const string &s)
 {
     return QString::fromStdString(s);
 }
 
 //判断dest目录下是否含有source文件
-bool ifDirHaveFile(QString source_file, QString dest_file)
+bool CMD::ifDirHaveFile(QString source_file, QString dest_file)
 {
     QStringList dest_list = disk.getFileList(dest_file);
     if(dest_list.indexOf(source_file) == -1) {
@@ -73,7 +73,7 @@ bool ifDirHaveFile(QString source_file, QString dest_file)
 }
 
 //获取用户输入文件名对应的路径
-QString get_true_path(QString str)
+QString CMD::get_true_path(QString str)
 {
     QStringList path_list = str.split('/', QString::SkipEmptyParts);
     QString new_path = Global_path;
@@ -97,7 +97,7 @@ QString get_true_path(QString str)
 }
 
 //获取用户输入文件名对应的路径列表（应对rm用出现的*符号）
-QStringList get_true_path_list(QString str)
+QStringList CMD::get_true_path_list(QString str)
 {
     QStringList path_list = str.split('/', QString::SkipEmptyParts);
     QString new_path = Global_path;
@@ -138,7 +138,7 @@ QStringList get_true_path_list(QString str)
  * SYNOPSIS
  *      ls [-alrt] [name...]
  */
-void ls(QStringList strList)
+void CMD::ls(QStringList strList)
 {
     int length = strList.count();
     if(length >= 2 && strList[1] == "--help") {
@@ -363,7 +363,7 @@ void ls(QStringList strList)
  *SYNOPSIS
  *    cd [dir]
  */
-void cd(QStringList strList)
+void CMD::cd(QStringList strList)
 {
     if(strList.count() == 1) {
         Global_path = "/" + Global_user;
@@ -386,7 +386,7 @@ void cd(QStringList strList)
  * SYNOPSIS
  *      pwd
  */
-void pwd()
+void CMD::pwd()
 {
     qDebug() << qPrintable(Global_path);
 }
@@ -397,7 +397,7 @@ void pwd()
  * SYNOPSIS
  *      mkdir [-p] dirName
  */
-void mkdir(QStringList strList)
+void CMD::mkdir(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) { //e.g. mkdir
@@ -493,7 +493,7 @@ void mkdir(QStringList strList)
  * SYNOPSIS
  *      rmdir [-p] dirName
  */
-void rmdir(QStringList strList)
+void CMD::rmdir(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -589,7 +589,7 @@ void rmdir(QStringList strList)
 }
 extern MainWindow w;
 /*rm对文件目录进行递归删除*/
-void rm_del(QString filename, int ask)
+void CMD::rm_del(QString filename, int ask)
 {
     while(disk.getFileList(filename).count() > 0) {
         QStringList file_list = disk.getFileList(filename);
@@ -666,7 +666,7 @@ void rm_del(QString filename, int ask)
  * SYNOPSIS
  *      rm [-ri] name
  */
-void rm(QStringList strList)
+void CMD::rm(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -801,7 +801,7 @@ void rm(QStringList strList)
  *      mv [-bifnu] source dest
  *      mv [-bifnu] source directory
  */
-void mv(QStringList strList)
+void CMD::mv(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -1041,7 +1041,7 @@ void mv(QStringList strList)
  * SYNOPSIS
  *      cp [-fpr] source... directory
  */
-void cp(QStringList strList)
+void CMD::cp(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -1238,7 +1238,7 @@ void cp(QStringList strList)
  * SYNOPSIS
  *      cat file
  */
-void cat(QStringList strList)
+void CMD::cat(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -1354,7 +1354,7 @@ void locate(QStringList strList,QString Global_user)
 //    }
 //}
 
-void add_permission(QString filename, int mum[3], QString p)
+void CMD::add_permission(QString filename, int mum[3], QString p)
 {
     QString n_p = disk.getFileAuth(filename);
     for(int i = 0; i < 3; i++) {
@@ -1373,7 +1373,7 @@ void add_permission(QString filename, int mum[3], QString p)
     disk.changeFileAuth(filename, n_p);
 }
 
-void sub_permission(QString filename, int mum[3], QString p)
+void CMD::sub_permission(QString filename, int mum[3], QString p)
 {
     QString n_p = disk.getFileAuth(filename);
     for(int i = 0; i < 3; i++) {
@@ -1392,7 +1392,7 @@ void sub_permission(QString filename, int mum[3], QString p)
     disk.changeFileAuth(filename, n_p);
 }
 
-void update_permission(QString filename, int mum[3], QString p)
+void CMD::update_permission(QString filename, int mum[3], QString p)
 {
     QString n_p = "";
     if(disk.getFileType(filename) == 0) {
@@ -1430,7 +1430,7 @@ void update_permission(QString filename, int mum[3], QString p)
  * SYNOPSIS
  *      chmod [ugoa...][[+-=][rwxX]...][,...] file
  */
-void chmod(QStringList strList)
+void CMD::chmod(QStringList strList)
 {
     if(Global_user != "root") {
         return ;
@@ -1622,7 +1622,7 @@ void ln(QStringList strList,QString Global_user)
  * SYNOPSIS
  *      login username
  */
-void login(QStringList strList)
+void CMD::login(QStringList strList)
 {
     if(strList.count() == 1) {
         qDebug() << "login: missing operand";
@@ -1646,7 +1646,7 @@ void login(QStringList strList)
  * SYNOPSIS
  *      logout
  */
-void logout()
+void CMD::logout()
 {
     if(Global_user == "") {
         qDebug().nospace() << "rmdir: failed to logout : No user is logged in.";
@@ -1707,7 +1707,7 @@ void logout()
  * SYNOPSIS
  *      adduser username
  */
-void adduser(QStringList strList)
+void CMD::adduser(QStringList strList)
 {
     if(Global_user != "root") {
         qDebug() << "Permission denied";
@@ -1731,7 +1731,7 @@ void adduser(QStringList strList)
  * SYNOPSIS
  *      passwd Global_username
  */
-void passwd(QStringList strList)
+void CMD::passwd(QStringList strList)
 {
     if(Global_user != "root") {
         qDebug() << "Permission denied";
@@ -1765,7 +1765,7 @@ void passwd(QStringList strList)
  * SYNOPSIS
  *      rmuser username
  */
-void rmuser(QStringList strList)
+void CMD::rmuser(QStringList strList)
 {
     if(Global_user != "root") {
         qDebug() << "Permission denied";
@@ -1790,7 +1790,7 @@ void rmuser(QStringList strList)
  * SYNOPSIS
  *      touch file
  */
-void touch(QStringList strList)
+void CMD::touch(QStringList strList)
 {
     if(strList.count() == 1) {
         qDebug() << "login: missing operand";
@@ -1857,7 +1857,7 @@ void kill(QStringList strList,QString Global_user)
  * SYNOPSIS
  *      read filename
  */
-void read(QStringList strList)
+void CMD::read(QStringList strList)
 {
     int length = strList.count();
     if(length == 1) {
@@ -1901,7 +1901,7 @@ void read(QStringList strList)
  * SYNOPSIS
  *      write filename context
  */
-void write(QStringList strList)
+void CMD::write(QStringList strList)
 {
     int length = strList.count();
     if(length <= 2) {
@@ -1945,7 +1945,7 @@ void write(QStringList strList)
  * SYNOPSIS
  *     help [-dms] [pattern]
  */
-void help(QStringList strList)
+void CMD::help(QStringList strList)
 {
     //qDebug()<<strList;
     //qDebug()<<strList.count();
@@ -2329,7 +2329,7 @@ void help(QStringList strList)
  * SYNOPSIS
  *      clear
  */
-void clear()
+void CMD::clear()
 {
     system ("clear");
 }
@@ -2340,7 +2340,7 @@ void clear()
  * SYNOPSIS
  *      [sudo] format
  */
-void format()
+void CMD::format()
 {
     if(Global_user == "root") {
         disk.Init();
@@ -2352,13 +2352,13 @@ void format()
 /*
  * Judgment instruction function
  */
-void choose(QString str)
+void CMD::choose(QString str)
 {
     QStringList strList = str.split(" ");
     if (strList[0] == "ls") {
         ls(strList);
     } else if (strList[0] == "cd") {
-        cd(strList);
+        CMD::cd(strList);
     } else if (strList[0] == "pwd") {
         pwd();
     } else if (strList[0] == "mkdir") {
