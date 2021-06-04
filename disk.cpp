@@ -558,6 +558,35 @@ void DISK::load_chengzu()
     os.close();
 }
 
+// 用户表保存
+void DISK::saveUserTable()
+{
+    ofstream os;
+    os.open("UserTable.txt");
+    vector<USER> s = this->user_table.getUser_table();
+    for (vector<USER>::iterator it = s.begin(); it != s.end(); it++)
+    {
+        os << it->getId()<< " ";
+        os << it->getUsername()<< " ";
+        os << it->getUserpwd()<< " ";
+        os << it->getUsergrp()<< " ";
+        os << it->getIsManager()<< " ";
+    }
+    os.close();
+}
+// 用户表加载
+void DISK::loadUserTable()
+{
+    string a;
+    ifstream os;
+    os.open("UserTable.txt");
+    while(os >> a)
+    {
+        user_table.add_user();
+    }
+    os.close();
+}
+
 
 
 int DISK::getFileCurPathIndex(QString file_path)
