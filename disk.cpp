@@ -558,6 +558,54 @@ void DISK::load_chengzu()
     os.close();
 }
 
+// bfd保存
+void DISK::save_bfd()
+{
+    ofstream os;
+    os.open("bfd.txt");
+    vector<BFD_ITEM_DISK> s = this->d_inodes.getBFD_DISK_list();
+    for (vector<BFD_ITEM_DISK>::iterator it = s.begin(); it != s.end(); it++)
+        os << (*it).getDinode_ID() << " "
+           << (*it).getMaster_ID() << " "
+           << (*it).getF_type() << " "
+           << (*it).getAuth()[0] << " "
+              << (*it).getAuth()[1] << " "
+                 << (*it).getAuth()[2] << " "
+           << (*it).getF_size() << " "
+           << (*it).getF_addr() << " "
+           << (*it).getF_link_num() << " "
+           << (*it).getF_creat_time() << " "
+           << (*it).getF_change_time() << " ";
+    os.close();
+}
+// bfd加载
+void DISK::load_bfd()
+{
+    vector<int> s;
+    ifstream os;
+    int dinode_ID;    // i结点的id
+      unsigned int master_ID;    // 文件拥有者ID
+      int f_type; // 文件类型
+      vector<char> auth;         // 权限（三位十进制数表示）
+      unsigned long long f_size; // 文件大小
+      unsigned int f_addr;       // 文件地址（物理地址/下级目录ID）
+      unsigned int f_link_num;   // 文件链接计数
+      time_t f_creat_time;       // 文件创建时间
+      time_t f_change_time;
+    os.open("bfd.txt");
+    int flag = 0;
+    vector<BFD_ITEM_DISK> temp_vector;
+    while(os >> dinode_ID >> master_ID >> f_type >> auth[0] >> auth[1] >> auth[2]
+          >> auth[2] >> f_size >> f_addr >> f_link_num >> f_creat_time >> f_change_time)
+    {
+        BFD_ITEM_DISK* new_temp = new BFD_ITEM_DISK(dinode_ID,master_ID,f_type,auth,f_size,f_addr,f_link_num,f_creat_time,f_change_time);
+        temp_vector.push_back(*new_temp);
+    }
+    this->d_inodes.setBFD_DISK_list(temp_vector);
+    os.close();
+}
+
+
 // 用户表保存
 void DISK::saveUserTable()
 {
