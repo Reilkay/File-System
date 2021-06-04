@@ -63,7 +63,7 @@ QString s2q(const string &s)
 return QString(QString::fromLocal8Bit(s.c_str()));
 }
 
-//
+//判断dest目录下是否含有source文件
 bool ifDirHaveFile(QString source_file,QString dest_file)
 {
     QStringList dest_list = disk.getFileList(dest_file);
