@@ -31,7 +31,7 @@ public:
 
     void cat(QStringList strList);
 
-    void find(QStringList strList);
+    //void find(QStringList strList);
 
     void add_permission(QString filename, int mum[3], QString p);
 
@@ -45,9 +45,9 @@ public:
 
     void logout();
 
-    void open(QStringList strList);
+    //void open(QStringList strList);
 
-    void close(QStringList strList);
+    //void close(QStringList strList);
 
     void adduser(QStringList strList);
 
@@ -67,7 +67,7 @@ public:
 
     void format();
 
-    void choose(QString str);
+    void chooseCMD(QString str);
 
     string q2s(const QString &s);
     QString s2q(const string &s);

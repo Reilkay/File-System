@@ -587,6 +587,7 @@ void CMD::rmdir(QStringList strList)
         } while((disk.getFileList(file_name).count() > 0) && file_name != "当前路径" && file_place == 2);
     }
 }
+
 extern MainWindow w;
 /*rm对文件目录进行递归删除*/
 void CMD::rm_del(QString filename, int ask)
@@ -611,18 +612,21 @@ void CMD::rm_del(QString filename, int ask)
                             disk.delFile(file_list[i]);
                         } else {
                             qDebug() << "Permission denied";
+                            return ;
                         }
                     } else if(disk.getUserGroup(q2s(Global_user))) { //获取权限，group
                         if(permission[5] == 'w') {
                             disk.delFile(file_list[i]);
                         } else {
                             qDebug() << "Permission denied";
+                            return ;
                         }
                     } else { //others
                         if(permission[8] == 'w') {
                             disk.delFile(file_list[i]);
                         } else {
                             qDebug() << "Permission denied";
+                            return ;
                         }
                     }
                 }
@@ -643,18 +647,21 @@ void CMD::rm_del(QString filename, int ask)
                 disk.delFile(filename);
             } else {
                 qDebug() << "Permission denied";
+                return ;
             }
         } else if(disk.getUserGroup(q2s(Global_user))) { //获取权限，group
             if(permission[5] == 'w') {
                 disk.delFile(filename);
             } else {
                 qDebug() << "Permission denied";
+                return ;
             }
         } else { //others
             if(permission[8] == 'w') {
                 disk.delFile(filename);
             } else {
                 qDebug() << "Permission denied";
+                return ;
             }
         }
     }
@@ -2352,26 +2359,29 @@ void CMD::format()
 /*
  * Judgment instruction function
  */
-void CMD::choose(QString str)
+void CMD::chooseCMD(QString str)
 {
     QStringList strList = str.split(" ");
     if (strList[0] == "ls") {
         ls(strList);
-    } else if (strList[0] == "cd") {
-        CMD::cd(strList);
+    }
+    else if (strList[0] == "cd") {
+        cd(strList);
     } else if (strList[0] == "pwd") {
         pwd();
     } else if (strList[0] == "mkdir") {
         mkdir(strList);    //Global_user
     } else if (strList[0] == "rmdir") {
         rmdir(strList);    //Global_user
-    } else if (strList[0] == "rm") {
+    }
+    else if (strList[0] == "rm") {
         rm(strList);    //Global_user
     } else if (strList[0] == "mv") {
         mv(strList);    //Global_user
     } else if (strList[0] == "cp") {
         cp(strList);    //Global_user
-    } else if (strList[0] == "cat") {
+    }
+    else if (strList[0] == "cat") {
         cat(strList);    //Global_user
     } /*else if (strList[0] == "whereis") {
         whereis(strList);
@@ -2379,19 +2389,23 @@ void CMD::choose(QString str)
         find(strList);
     }*/ else if (strList[0] == "chomd") {
         chmod(strList);    //Global_user
-    } else if (strList[0] == "login") {
+    }
+    else if (strList[0] == "login") {
         login(strList);
-    } else if (strList[0] == "logout") {
+    }
+    else if (strList[0] == "logout") {
         logout();
     } /*else if (strList[0] == "open") {
         open(strList);
     } else if (strList[0] == "close") {
         close(strList);
-    }*/ else if (strList[0] == "addGlobal_user") {
+    }*/ else if (strList[0] == "adduser") {
         adduser(strList);    //Global_user
-    } else if (strList[0] == "passwd") {
+    }
+    else if (strList[0] == "passwd") {
         passwd(strList);
-    } else if (strList[0] == "rmGlobal_user") {
+    }
+    else if (strList[0] == "rmuser") {
         rmuser(strList);    //Global_user
     } else if (strList[0] == "touch") {
         touch(strList);    //Global_user
@@ -2410,7 +2424,7 @@ void CMD::choose(QString str)
         if(psword == "root") {
             str = str.mid(5);
             Global_user = "root";
-            choose(str);
+            chooseCMD(str);
         } else {
             qDebug() << "password error";
         }
