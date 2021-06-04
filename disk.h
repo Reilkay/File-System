@@ -109,6 +109,12 @@ public:
     // 复制文件 1表示需要复制原文件修改时间和权限 0表示新文件拥有自己的修改时间和权限
     void copy_file(QString source,QString dest,int flag);
 
+
+    //*****************************************
+    // 成组链接法-持久化存储
+    void save_chengzu();
+    void load_chengzu();
+
 private:
     // 成组链接的首个超级块
     SUPER_BLOCK Super_block;

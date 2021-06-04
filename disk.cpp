@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <QDebug>
+#include <fstream>
 
 using namespace std;
 
@@ -529,6 +530,35 @@ void DISK::copy_file(QString source, QString dest, int flag)
     const char* ch = tmp.c_str();
     saveFile(new_bfd_item.getDinode_ID(), const_cast<char*>(ch));
 }
+
+// 成组链接保存
+void DISK::save_chengzu()
+{
+    ofstream os;
+    os.open("chengzu.txt");
+    vector<int> s = this->Super_block.get_all_disk_free_block();
+    for (vector<int>::iterator it = s.begin(); it != s.end(); it++)
+        os << *it<< " ";
+    os.close();
+}
+// 成组链接加载
+void DISK::load_chengzu()
+{
+    vector<int> s;
+    ifstream os;
+    int a;
+    os.open("chengzu.txt");
+    while(os >> a)
+    {
+        s.push_back(a);
+    }
+    // 初始条件需要成组链接设置为空
+    this->Super_block.Init();
+    this->Super_block.add_disk_free_block(s);
+    os.close();
+}
+
+
 
 int DISK::getFileCurPathIndex(QString file_path)
 {
