@@ -1,5 +1,5 @@
 #include "instruction.h"
-#include "disk.h"
+
 /*
 Instruction::Instruction(QObject *parent)
     : QAbstractItemModel(parent)
@@ -47,9 +47,7 @@ QVariant Instruction::data(const QModelIndex &index, int role) const
 }
 */
 
-QString Global_path = "/";
-QString Global_user = "";
-DISK disk;
+
 
 //QString 转 string
 string q2s(const QString &s)

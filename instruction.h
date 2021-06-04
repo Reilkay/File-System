@@ -6,28 +6,66 @@
 #include <QDebug>
 #include <QCharRef>
 #include <string>
+#include "disk.h"
 
-//class Instruction : public QAbstractItemModel
-//{
-//    Q_OBJECT
+QString Global_path = "/";
+QString Global_user = "";
+DISK disk;
 
-//public:
-//    explicit Instruction(QObject *parent = nullptr);
+void ls(QStringList strList);
 
-//    // Header:
-//    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+void cd(QStringList strList);
 
-//    // Basic functionality:
-//    QModelIndex index(int row, int column,
-//                      const QModelIndex &parent = QModelIndex()) const override;
-//    QModelIndex parent(const QModelIndex &index) const override;
+void pwd();
 
-//    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-//    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+void mkdir(QStringList strList);
 
-//    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+void rmdir(QStringList strList);
 
-//private:
-//};
+void rm(QStringList strList);
+
+void mv(QStringList strList);
+
+void cp(QStringList strList);
+
+void cat(QStringList strList);
+
+void find(QStringList strList);
+
+void add_permission(QString filename,int mum[3],QString p);
+
+void sub_permission(QString filename,int mum[3],QString p);
+
+void update_permission(QString filename,int mum[3],QString p);
+
+void chmod(QStringList strList);
+
+void login(QStringList strList);
+
+void logout();
+
+void open(QStringList strList);
+
+void close(QStringList strList);
+
+void adduser(QStringList strList);
+
+void passwd(QStringList strList);
+
+void rmuser(QStringList strList);
+
+void touch(QStringList strList);
+
+void read(QStringList strList);
+
+void write(QStringList strList);
+
+void help(QStringList strList);
+
+void clear();
+
+void format();
+
+void choose(QString str);
 
 #endif // INSTRUCTION_H
