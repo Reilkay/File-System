@@ -117,6 +117,9 @@ public:
     // bfd持久化存储
     void save_bfd();
     void load_bfd();
+    // 用户表-持久化存储
+    void saveUserTable();
+    void loadUserTable();
 
 private:
     // 成组链接的首个超级块
