@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <QDebug>
+#include <fstream>
 
 using namespace std;
 
@@ -317,28 +318,28 @@ void DISK::delFile(QString file_path)
     // 回收磁盘块
     Super_block.add_disk_free_block(getBlocksUsedByFile(inode_id));
     // 从BFD中删除
-    BFD_DISK temp_all_bfd = this->getD_inodes();
-    for (vector<BFD_ITEM_DISK>::iterator it = temp_all_bfd.getBFD_DISK_list().begin();
-         it != temp_all_bfd.getBFD_DISK_list().end();
+    vector<BFD_ITEM_DISK> temp_all_bfd = this->d_inodes.getBFD_DISK_list();
+    for (vector<BFD_ITEM_DISK>::iterator it = temp_all_bfd.begin();
+         it != temp_all_bfd.end();
          it++) {
         if (it->getDinode_ID() == inode_id) {
-            temp_all_bfd.getBFD_DISK_list().erase(it);
+            temp_all_bfd.erase(it);
             break;
         }
     }
-    this->setD_inodes(temp_all_bfd);
+    this->d_inodes.setBFD_DISK_list(temp_all_bfd);
     // 从SFD中删除
-    vector<SFD> temp = this->getAll_sfd();
     int cur_layer = getFileCurPathIndex(file_path);
-    for (vector<SFD_ITEM>::iterator it = temp[cur_layer].getSFD_list().begin();
-         it != temp[cur_layer].getSFD_list().end();
+    vector<SFD_ITEM> temp = this->all_sfd[cur_layer].getSFD_list();
+    for (vector<SFD_ITEM>::iterator it = temp.begin();
+         it != temp.end();
          it++) {
         if (it->getID() == inode_id) {
-            temp[cur_layer].getSFD_list().erase(it);
+            temp.erase(it);
             break;
         }
     }
-    this->setAll_sfd(temp);
+    this->all_sfd[cur_layer].setSFD_list(temp);
 
     //    int dir_dfs_layer_begin = split_path.size();
     //    // 找到这个文件的inode的id
@@ -530,6 +531,35 @@ void DISK::copy_file(QString source, QString dest, int flag)
     saveFile(new_bfd_item.getDinode_ID(), const_cast<char*>(ch));
 }
 
+// 成组链接保存
+void DISK::save_chengzu()
+{
+    ofstream os;
+    os.open("chengzu.txt");
+    vector<int> s = this->Super_block.get_all_disk_free_block();
+    for (vector<int>::iterator it = s.begin(); it != s.end(); it++)
+        os << *it<< " ";
+    os.close();
+}
+// 成组链接加载
+void DISK::load_chengzu()
+{
+    vector<int> s;
+    ifstream os;
+    int a;
+    os.open("chengzu.txt");
+    while(os >> a)
+    {
+        s.push_back(a);
+    }
+    // 初始条件需要成组链接设置为空
+    this->Super_block.Init();
+    this->Super_block.add_disk_free_block(s);
+    os.close();
+}
+
+
+
 int DISK::getFileCurPathIndex(QString file_path)
 {
     QStringList split_path = file_path.split("/",QString::SkipEmptyParts);
@@ -613,19 +643,21 @@ void DISK::moveFileToDir(QString source, QString dest)
     int dir_layer = nofilenameGetFileCurPathIndex(dest);
     QStringList split_path = source.split("/", QString::SkipEmptyParts);
     string old_file_name = split_path.back().toStdString();
-    vector<SFD> temp = this->getAll_sfd();
+    vector<SFD_ITEM> temp = this->all_sfd[file_layer].getSFD_list();
+    vector<SFD_ITEM> temp_dir = this->all_sfd[dir_layer].getSFD_list();
     // 找到文件 然后填在文件夹里 同时删除
-    for (vector<SFD_ITEM>::iterator it = temp[file_layer].getSFD_list().begin();
-         it != temp[file_layer].getSFD_list().end();
+    for (vector<SFD_ITEM>::iterator it = temp.begin();
+         it != temp.end();
          it++) {
         if (it->getFile_name() == old_file_name) {
-            temp[dir_layer].getSFD_list().push_back(*it);
+            temp_dir.push_back(*it);
             // 删除这个表项
-            temp[file_layer].getSFD_list().erase(it);
+            temp.erase(it);
             break;
         }
     }
-    this->setAll_sfd(temp);
+    this->all_sfd[file_layer].setSFD_list(temp);
+    this->all_sfd[dir_layer].setSFD_list(temp_dir);
 }
 
 QStringList DISK::getFileList(QString file_path)
@@ -651,16 +683,16 @@ void DISK::changeFileName(QString source, QString dest)
     QStringList split_path2 = source.split("/", QString::SkipEmptyParts);
     string new_file_name = split_path.back().toStdString();
     string old_file_name = split_path2.back().toStdString();
-    vector<SFD> temp = this->getAll_sfd();
-    for (vector<SFD_ITEM>::iterator it = temp[sfd_index].getSFD_list().begin();
-         it != temp[sfd_index].getSFD_list().end();
+    vector<SFD_ITEM> temp = this->all_sfd[sfd_index].getSFD_list();
+    for (vector<SFD_ITEM>::iterator it = temp.begin();
+         it != temp.end();
          it++) {
         if (it->getFile_name() == old_file_name) {
             it->setFile_name(new_file_name);
             break;
         }
     }
-    this->setAll_sfd(temp);
+    this->all_sfd[sfd_index].setSFD_list(temp);
 
     return;
 }
@@ -716,16 +748,16 @@ void DISK::addUser(string user_name)
 
 void DISK::delUser(string user_name)
 {
-    USER_TABLE temp = this->getUser_table();
-    for (vector<USER>::iterator it = temp.getUser_table().begin();
-         it != temp.getUser_table().end();
+    vector<USER> temp = this->getUser_table().getUser_table();
+    for (vector<USER>::iterator it = temp.begin();
+         it != temp.end();
          it++) {
         if (it->getUsername() == user_name) {
             this->user_table.getUser_table().erase(it);
             break;
         }
     }
-    this->setUser_table(temp);
+    this->user_table.setUser_table(temp);
 }
 
 int DISK::getUserGroup(string user_name)

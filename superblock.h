@@ -17,6 +17,9 @@ public:
     // 初始化超级块
     void Init();
 
+    // 格式化
+    void Format();
+
     // 根据文件所需的数据块数目 返回对应的磁盘块序号 vector
     // 扩展：当磁盘不够分时 返回空的vector
     vector<int> distri_disk_free_block(int need_block_numbers);

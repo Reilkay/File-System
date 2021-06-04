@@ -16,6 +16,14 @@ SUPER_BLOCK::SUPER_BLOCK()
 
 void SUPER_BLOCK::Init()
 {
+    this->super_block_size = 0;
+    this->disk_num_list.reserve(SUPERFREEBLOCK);
+    this->next_super_block = nullptr;
+    this->total_free_block_num = 0;
+}
+
+void SUPER_BLOCK::Format()
+{
     // 每个数据块
     int per_disk_block_size = BLOCKSIZE;
     // 数据块数目
@@ -82,7 +90,7 @@ vector<int> SUPER_BLOCK::distri_disk_free_block(int need_block_numbers)
 // 增加磁盘块
 bool SUPER_BLOCK::add_disk_free_block(vector<int> free_disk_numbers)
 {
-    if(this->next_super_block->total_free_block_num + free_disk_numbers.size() >= DATABLOCKNUM) {
+    if(this->next_super_block->total_free_block_num + free_disk_numbers.size() > DATABLOCKNUM) {
         return false;
     }
     SUPER_BLOCK* tail = this->next_super_block;
