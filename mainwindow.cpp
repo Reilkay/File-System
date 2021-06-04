@@ -52,7 +52,7 @@ QString MainWindow::waitUserInputYN()
 
 void MainWindow::on_Excute_clicked()
 {
-    // choose(Command);
+    choose(Command);
     qDebug() << waitUserInputPass();
 }
 
