@@ -317,24 +317,29 @@ void DISK::delFile(QString file_path)
     // 回收磁盘块
     Super_block.add_disk_free_block(getBlocksUsedByFile(inode_id));
     // 从BFD中删除
-    for (vector<BFD_ITEM_DISK>::iterator it = this->d_inodes.getBFD_DISK_list().begin();
-         it != this->d_inodes.getBFD_DISK_list().end();
+    BFD_DISK temp_all_bfd = this->getD_inodes();
+    for (vector<BFD_ITEM_DISK>::iterator it = temp_all_bfd.getBFD_DISK_list().begin();
+         it != temp_all_bfd.getBFD_DISK_list().end();
          it++) {
         if (it->getDinode_ID() == inode_id) {
-            this->d_inodes.getBFD_DISK_list().erase(it);
+            temp_all_bfd.getBFD_DISK_list().erase(it);
             break;
         }
     }
+    this->setD_inodes(temp_all_bfd);
     // 从SFD中删除
+    vector<SFD> temp = this->getAll_sfd();
     int cur_layer = getFileCurPathIndex(file_path);
-    for (vector<SFD_ITEM>::iterator it = this->all_sfd[cur_layer].getSFD_list().begin();
-         it != this->all_sfd[cur_layer].getSFD_list().end();
+    for (vector<SFD_ITEM>::iterator it = temp[cur_layer].getSFD_list().begin();
+         it != temp[cur_layer].getSFD_list().end();
          it++) {
         if (it->getID() == inode_id) {
-            this->all_sfd[cur_layer].getSFD_list().erase(it);
+            temp[cur_layer].getSFD_list().erase(it);
             break;
         }
     }
+    this->setAll_sfd(temp);
+
     //    int dir_dfs_layer_begin = split_path.size();
     //    // 找到这个文件的inode的id
     //    int inode_id = this->findFile(file_path);
@@ -527,10 +532,9 @@ void DISK::copy_file(QString source, QString dest, int flag)
 
 int DISK::getFileCurPathIndex(QString file_path)
 {
-    QStringList split_path = file_path.split("/", QString::SkipEmptyParts);
-    if(file_path == "/") {
+    QStringList split_path = file_path.split("/",QString::SkipEmptyParts);
+    if(file_path == "/")
         return 0;
-    }
     // 层数
     int layer = 0;
     int layer_max = split_path.size();
@@ -609,17 +613,19 @@ void DISK::moveFileToDir(QString source, QString dest)
     int dir_layer = nofilenameGetFileCurPathIndex(dest);
     QStringList split_path = source.split("/", QString::SkipEmptyParts);
     string old_file_name = split_path.back().toStdString();
+    vector<SFD> temp = this->getAll_sfd();
     // 找到文件 然后填在文件夹里 同时删除
-    for (vector<SFD_ITEM>::iterator it = this->all_sfd[file_layer].getSFD_list().begin();
-         it != this->all_sfd[file_layer].getSFD_list().end();
+    for (vector<SFD_ITEM>::iterator it = temp[file_layer].getSFD_list().begin();
+         it != temp[file_layer].getSFD_list().end();
          it++) {
         if (it->getFile_name() == old_file_name) {
-            this->all_sfd[dir_layer].getSFD_list().push_back(*it);
+            temp[dir_layer].getSFD_list().push_back(*it);
             // 删除这个表项
-            this->all_sfd[file_layer].getSFD_list().erase(it);
+            temp[file_layer].getSFD_list().erase(it);
             break;
         }
     }
+    this->setAll_sfd(temp);
 }
 
 QStringList DISK::getFileList(QString file_path)
@@ -645,13 +651,17 @@ void DISK::changeFileName(QString source, QString dest)
     QStringList split_path2 = source.split("/", QString::SkipEmptyParts);
     string new_file_name = split_path.back().toStdString();
     string old_file_name = split_path2.back().toStdString();
-    for (vector<SFD_ITEM>::iterator it = all_sfd[sfd_index].getSFD_list().begin();
-         it != all_sfd[sfd_index].getSFD_list().end();
+    vector<SFD> temp = this->getAll_sfd();
+    for (vector<SFD_ITEM>::iterator it = temp[sfd_index].getSFD_list().begin();
+         it != temp[sfd_index].getSFD_list().end();
          it++) {
         if (it->getFile_name() == old_file_name) {
             it->setFile_name(new_file_name);
+            break;
         }
     }
+    this->setAll_sfd(temp);
+
     return;
 }
 
@@ -706,14 +716,16 @@ void DISK::addUser(string user_name)
 
 void DISK::delUser(string user_name)
 {
-    for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
-         it != this->user_table.getUser_table().end();
+    USER_TABLE temp = this->getUser_table();
+    for (vector<USER>::iterator it = temp.getUser_table().begin();
+         it != temp.getUser_table().end();
          it++) {
         if (it->getUsername() == user_name) {
             this->user_table.getUser_table().erase(it);
-            return;
+            break;
         }
     }
+    this->setUser_table(temp);
 }
 
 int DISK::getUserGroup(string user_name)
@@ -771,14 +783,16 @@ QString DISK::readFileByLine(QString path)
 
 void DISK::changeUserPass(string user_name, string pass)
 {
-    for (vector<USER>::iterator it = this->user_table.getUser_table().begin();
-         it != this->user_table.getUser_table().end();
+    USER_TABLE temp = this->getUser_table();
+    for (vector<USER>::iterator it = temp.getUser_table().begin();
+         it != temp.getUser_table().end();
          it++) {
         if (it->getUsername() == user_name) {
             it->setUserpwd(pass);
-            return;
+            break;
         }
     }
+    this->setUser_table(temp);
     return;
 }
 
